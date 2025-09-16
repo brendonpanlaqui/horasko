@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../api/axios";
+import api from "../api/axios"; // ✅ axios instance with baseURL + withCredentials
 
 export default function Login() {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [alert, setAlert] = useState(null); // { type: 'success' | 'danger', message: string }
+  const [alert, setAlert] = useState(null);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -18,17 +18,17 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // Step 1: Get CSRF cookie
-      await API.get("/sanctum/csrf-cookie");
+      // 1. Get CSRF cookie from Sanctum
+      await api.get("/sanctum/csrf-cookie");
 
-      // Step 2: Login
-      await API.post("/login", { email, password });
+      // 2. Send login request (Laravel route should be POST /api/login)
+      await api.post("/api/login", { email, password });
 
-      // Step 3: Fetch user info
-      const res = await API.get("/me");
+      // 3. Get authenticated user (Laravel route should be GET /api/me)
+      const res = await api.get("/api/me");
       const user = res.data;
 
-      // Save user to localStorage (not token, just info)
+      // Optional: store user in localStorage (until you move to AuthContext)
       localStorage.setItem("user", JSON.stringify(user));
 
       setAlert({ type: "success", message: "Login successful — redirecting…" });
@@ -51,11 +51,12 @@ export default function Login() {
   };
 
   return (
-    <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center" style={{ background: "linear-gradient(180deg, rgba(246,249,252,1) 0%, rgba(255,255,255,1) 100%)" }}>
+    <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center"
+      style={{ background: "linear-gradient(180deg, rgba(246,249,252,1) 0%, rgba(255,255,255,1) 100%)" }}>
       <div className="row w-100 justify-content-center">
         <div className="col-11 col-md-8 col-lg-5">
           <div className="card shadow-sm border-radius-xl">
-            {/* header / brand */}
+            {/* Header */}
             <div className="card-header text-center pt-4 pb-1 bg-transparent border-0">
               <h4 className="mb-0 fw-bold">Login your account</h4>
               <p className="text-muted small mb-0">Sign in to access your work hours dashboard</p>
@@ -68,12 +69,14 @@ export default function Login() {
                 </div>
               )}
 
-              <form onSubmit={handleLogin} aria-label="login form">
-                {/* email */}
+              <form onSubmit={handleLogin}>
+                {/* Email */}
                 <div className="mb-3">
                   <label className="form-label small fw-semibold">Email</label>
                   <div className="input-group">
-                    <span className="input-group-text bg-transparent border-end-0"><i className="fas fa-envelope text-muted"></i></span>
+                    <span className="input-group-text bg-transparent border-end-0">
+                      <i className="fas fa-envelope text-muted"></i>
+                    </span>
                     <input
                       type="email"
                       className="form-control border-start-0"
@@ -81,17 +84,17 @@ export default function Login() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      aria-required="true"
-                      aria-label="email"
                     />
                   </div>
                 </div>
 
-                {/* password */}
+                {/* Password */}
                 <div className="mb-3">
                   <label className="form-label small fw-semibold">Password</label>
                   <div className="input-group">
-                    <span className="input-group-text bg-transparent border-end-0"><i className="fas fa-lock text-muted"></i></span>
+                    <span className="input-group-text bg-transparent border-end-0">
+                      <i className="fas fa-lock text-muted"></i>
+                    </span>
                     <input
                       type={showPassword ? "text" : "password"}
                       className="form-control border-start-0"
@@ -99,26 +102,27 @@ export default function Login() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      aria-required="true"
-                      aria-label="password"
                     />
                     <button
                       type="button"
                       className="btn btn-outline-secondary ms-1"
                       onClick={() => setShowPassword((s) => !s)}
-                      aria-pressed={showPassword}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                      style={{ whiteSpace: "nowrap" }}
                     >
                       {showPassword ? "Hide" : "Show"}
                     </button>
                   </div>
                 </div>
 
-                {/* remember + forgot */}
+                {/* Remember + forgot */}
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <div className="form-check">
-                    <input className="form-check-input" type="checkbox" value="" id="rememberMe" checked={remember} onChange={() => setRemember((r) => !r)} />
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="rememberMe"
+                      checked={remember}
+                      onChange={() => setRemember((r) => !r)}
+                    />
                     <label className="form-check-label small" htmlFor="rememberMe">
                       Remember me
                     </label>
@@ -128,17 +132,16 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* primary button */}
+                {/* Submit */}
                 <div className="d-grid mb-3">
                   <button
                     type="submit"
                     className="btn bg-gradient-primary btn-lg"
                     disabled={loading}
-                    aria-disabled={loading}
                   >
                     {loading ? (
                       <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        <span className="spinner-border spinner-border-sm me-2"></span>
                         Signing in...
                       </>
                     ) : (
@@ -148,14 +151,14 @@ export default function Login() {
                 </div>
               </form>
 
-              {/* divider */}
+              {/* Divider */}
               <div className="d-flex align-items-center mb-3">
                 <hr className="flex-grow-1" />
                 <small className="text-muted mx-2">or</small>
                 <hr className="flex-grow-1" />
               </div>
 
-              {/* Google button (visual consistent with template) */}
+              {/* Google button */}
               <div className="d-grid mb-2">
                 <button
                   type="button"
@@ -166,7 +169,7 @@ export default function Login() {
                 </button>
               </div>
 
-              {/* signup link */}
+              {/* Signup link */}
               <p className="text-center text-muted small mb-0 mt-2">
                 Don’t have an account?{" "}
                 <a href="/register" className="text-primary fw-bold">Sign up</a>
@@ -174,7 +177,6 @@ export default function Login() {
             </div>
           </div>
 
-          {/* subtle footer hint */}
           <p className="text-center text-muted small mt-3">
             By continuing, you agree to the <a href="/terms" className="text-primary">Terms</a> and <a href="/privacy" className="text-primary">Privacy Policy</a>.
           </p>

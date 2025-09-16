@@ -31,7 +31,7 @@ class AuthController extends Controller{
         ]);
 
         // Auto-login after signup
-        Auth::login($user);
+        Auth::guard('web')->login($user);
         $request->session()->regenerate();
 
         return response()->json([
@@ -44,7 +44,7 @@ class AuthController extends Controller{
     {
         $credentials = $request->only('email', 'password');
 
-        if (!Auth::attempt($credentials)) {
+        if (!Auth::guard('web')->attempt($credentials)) {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
@@ -59,10 +59,12 @@ class AuthController extends Controller{
     public function logout(Request $request)
     {
         Auth::guard('web')->logout();
+
+        // 🔥 This is required, otherwise React still thinks you’re logged in
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return response()->json(['message' => 'Logged out successfully!']);
+        return response()->json(['message' => 'Logged out successfully']);
     }
 
     public function me(Request $request)

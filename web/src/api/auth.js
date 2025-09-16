@@ -1,24 +1,24 @@
 import api from "./axios";
 
-export async function getCSRF() {
-    return api.get("/sanctum/csrf-cookie");
-}
+export const signup = async (name, email, password) => {
+  await api.get("/sanctum/csrf-cookie");
+  const res = await api.post("/api/signup", { name, email, password });
+  return res.data;
+};
 
-export async function signup(data) {
-    await getCSRF();
-    return api.post("/api/signup", data);
-}
+export const login = async (email, password) => {
+  await api.get("/sanctum/csrf-cookie");
+  const res = await api.post("/api/login", { email, password });
+  return res.data;
+};
 
-export async function login(data) {
-    await getCSRF();
-    return api.post("/api/login", data);
-}
+export const getMe = async () => {
+  const res = await api.get("/api/me");
+  return res.data;
+};
 
-export async function logout() {
-    await getCSRF();
-    return api.post("/api/logout");
-}
-
-export async function getMe() {
-    return api.get("/api/me");
-}
+export const logout = async () => {
+  await api.get("/sanctum/csrf-cookie"); // refresh CSRF before logout
+  const res = await api.post("/api/logout");
+  return res.data;
+};

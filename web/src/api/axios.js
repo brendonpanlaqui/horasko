@@ -1,8 +1,16 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
-  withCredentials: true,
+  baseURL: "http://localhost:8000",
+  withCredentials: true, // send cookies (needed for Sanctum)
+});
+
+api.interceptors.request.use((config) => {
+  const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+  if (match) {
+    config.headers["X-XSRF-TOKEN"] = decodeURIComponent(match[1]);
+  }
+  return config;
 });
 
 export default api;

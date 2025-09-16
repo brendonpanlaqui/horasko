@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Logout from "../pages/Logout";
 
-function Navbar({ user }) {
+function Navbar({ user, setUser }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
@@ -66,7 +66,7 @@ function Navbar({ user }) {
                   </small>
                 </li>
                 <li>
-                  <Logout />
+                  <Logout setUser={setUser}/>
                 </li>
               </ul>
             </li>
