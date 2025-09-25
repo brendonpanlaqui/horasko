@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api/axios"; // ✅ axios instance with baseURL + withCredentials
+import { login, getMe } from "../api/auth";
 
-export default function Login() {
+export default function Login({ setUser }) {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(true);
+  const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState(null);
 
@@ -18,21 +18,18 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // 1. Get CSRF cookie from Sanctum
-      await api.get("/sanctum/csrf-cookie");
+      // 1. Login via auth.js (handles CSRF internally)
+      await login(email, password, remember);
 
-      // 2. Send login request (Laravel route should be POST /api/login)
-      await api.post("/api/login", { email, password });
+      // 2. Fetch authenticated user
+      const user = await getMe();
 
-      // 3. Get authenticated user (Laravel route should be GET /api/me)
-      const res = await api.get("/api/me");
-      const user = res.data;
-
-      // Optional: store user in localStorage (until you move to AuthContext)
+      // 3. Store user locally (optional, keep minimal data only)
       localStorage.setItem("user", JSON.stringify(user));
-
+      setUser(user);
+      
+      // 4. Show success + redirect
       setAlert({ type: "success", message: "Login successful — redirecting…" });
-
       setTimeout(() => navigate("/", { replace: true }), 800);
     } catch (err) {
       const msg =

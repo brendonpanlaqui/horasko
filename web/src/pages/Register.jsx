@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../api/axios";
+import { register } from "../api/auth"; 
 
 export default function Register() {
   const navigate = useNavigate();
@@ -8,19 +8,22 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [alert, setAlert] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSignup = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await API.post("/signup", { name, email, password });
-      console.log("Signup success:", response.data);
+    e.preventDefault(); // Prevents page reload
+    setLoading(true);   // Disable button during request
+    setAlert(null);     // Clear previous alerts
 
+    try {
+      await register(name, email, password);
       setAlert({ type: "success", message: "Account created. Please log in." });
       setTimeout(() => navigate("/login"), 1500);
     } catch (error) {
-      const err = error.response?.data?.message || "Something went wrong.";
-      console.log("Signup error:", err);
-      setAlert({ type: "danger", message: err });
+      console.log("Signup error:", error);
+      setAlert({ type: "danger", message: error });
+    } finally {
+      setLoading(false);
     }
   };
 

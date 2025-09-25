@@ -10,12 +10,12 @@ export default function Dashboard() {
 
   const payrollStartDate = useMemo(
     () => new Date(today.getFullYear(), today.getMonth(), payrollStart),
-    [payrollStart]
+    [today,payrollStart]
   );
 
   const payrollEndDate = useMemo(
     () => new Date(today.getFullYear(), today.getMonth(), payrollEnd),
-    [payrollEnd]
+    [today,payrollEnd]
   );
 
   const maxAllowedDate = payrollEndDate > today ? today : payrollEndDate;
@@ -45,13 +45,19 @@ export default function Dashboard() {
       setPayrollEnd(lastDayOfMonth);
       setCurrentCutoffLabel(`16-${lastDayOfMonth}`);
     }
-  }, []);
+  }, [today]);
 
   const addEntry = () => {
     const date = dateInput;
     const hours = parseFloat(hoursInput);
     const monthName = new Intl.DateTimeFormat("en-US", { month: "long" }).format(today);
 
+    const selectedDate = new Date(dateInput);
+
+    if (selectedDate < payrollStartDate || selectedDate > maxAllowedDate) {
+      setAlert({ type: "danger", message: "Inputted date is outside current cutoff." });
+      return;
+    }
     if (!date) {
       setAlert({
         type: "danger",
@@ -60,8 +66,8 @@ export default function Dashboard() {
       return;
     }
 
-    if (isNaN(hours) || hours <= 0) {
-      setAlert({ type: "danger", message: "Please enter hours greater than zero." });
+    if (isNaN(hours) || hours <= 0 || hours > 24) {
+      setAlert({ type: "danger", message: "Please enter valid work hours, not zero (between 1 and 24)." });
       return;
     }
 
@@ -87,6 +93,13 @@ export default function Dashboard() {
 
   const averageDailyHours =
     workEntries.length > 0 ? (totalHours / workEntries.length).toFixed(2) : 0;
+
+  const formatDateLocal = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
   return (
     <div className="container-fluid py-4">
@@ -151,8 +164,8 @@ export default function Dashboard() {
                 className="form-control mb-3"
                 value={dateInput}
                 onChange={(e) => setDateInput(e.target.value)}
-                min={payrollStartDate.toISOString().split("T")[0]}
-                max={maxAllowedDate.toISOString().split("T")[0]}
+                min={formatDateLocal(payrollStartDate)}
+                max={formatDateLocal(maxAllowedDate)}
               />
               <label className="form-label">Hours Worked</label>
               <input
@@ -161,6 +174,8 @@ export default function Dashboard() {
                 placeholder="e.g. 8"
                 value={hoursInput}
                 onChange={(e) => setHoursInput(e.target.value)}
+                min={1}    
+                max={24}
               />
               <button className="btn bg-gradient-primary w-100" onClick={addEntry}>
                 Add / Update

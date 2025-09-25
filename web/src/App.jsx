@@ -11,13 +11,14 @@ import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Forgot from "./pages/Forgot";
+import Reset from "./pages/Reset";  
 
 // Protected layout for authenticated users
 function Layout({ user, setUser }) {
   return (
     <div className="d-flex w-100">
       <Sidebar user={user} />
-      <div className="main-content flex-grow-1 d-flex flex-column">
+      <div className="main-content flex-grow-1 d-flex flex-column min-vh-100 bg-gray-200">
         <Navbar user={user} setUser={setUser} />
         <main className="p-4 flex-grow-1">
           <Routes>
@@ -39,21 +40,17 @@ function App() {
 
   useEffect(() => {
     getMe()
-      .then((res) => {
-        setUser(res); // we already return the user object from Laravel
-      })
-      .catch(() => {
-        setUser(null); // not logged in
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      .then((res) => setUser(res)) // Laravel returns user object
+      .catch(() => setUser(null))  // Not logged in or token expired
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
-    <div className="d-flex vh-100 justify-content-center align-items-center">
-      <p>Loading...</p>
-    </div>
+    return (
+      <div className="d-flex vh-100 justify-content-center align-items-center">
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   return (
@@ -62,16 +59,19 @@ function App() {
         {/* Public routes (redirect to / if already logged in) */}
         <Route
           path="/login"
-          element={user ? <Navigate to="/" /> : <Login setUser={setUser} />}
+          element={user ? <Navigate to="/" replace/> : <Login setUser={setUser} />}
         />
         <Route
           path="/register"
-          element={user ? <Navigate to="/" /> : <Register setUser={setUser} />}
+          element={user ? <Navigate to="/" replace/> : <Register setUser={setUser} />}
         />
         <Route
           path="/forgot"
-          element={user ? <Navigate to="/" /> : <Forgot />}
+          element={user ? <Navigate to="/" replace/> : <Forgot />}
         />
+        <Route 
+          path="/reset" 
+          element={<Reset />} />
 
         {/* Protected routes */}
         <Route

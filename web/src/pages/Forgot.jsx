@@ -10,14 +10,21 @@ export default function Forgot() {
   const handleSendResetLink = async (e) => {
     e.preventDefault();
     try {
-      await API.post("/forgot-password", { email });
+      await API.post("/api/forgot-password", { email });
+
+      // Store email so Reset.jsx can use it
+      localStorage.setItem("resetEmail", email);
+
       setAlert({
         type: "success",
         message: "Password reset link sent to your email.",
       });
-      setTimeout(() => navigate("/login"), 2000);
+
+      // Optionally, don't redirect immediately; let them check their email
+      setTimeout(() => navigate("/login"), 2500);
     } catch (error) {
-      const err = error.response?.data?.message || "Failed to send reset link.";
+      const err =
+        error.response?.data?.message || "Failed to send reset link.";
       console.error("Error:", err);
       setAlert({ type: "danger", message: err });
     }

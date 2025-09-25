@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 
 class AuthController extends Controller{
-    public function signup(Request $request)
+    public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name'     => 'required|string|max:255',
@@ -93,7 +93,6 @@ class AuthController extends Controller{
             Auth::login($user);
             $request->session()->regenerate();
 
-            // Redirect back to React app with token in query params
             return redirect("http://localhost:5173/");
         } catch (\Exception $e) {
             \Log::error('Google login failed: ' . $e->getMessage());
