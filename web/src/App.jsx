@@ -15,11 +15,13 @@ import Reset from "./pages/Reset";
 
 // Protected layout for authenticated users
 function Layout({ user, setUser }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  
   return (
     <div className="d-flex w-100">
-      <Sidebar user={user} />
-      <div className="main-content flex-grow-1 d-flex flex-column min-vh-100 bg-gray-200">
-        <Navbar user={user} setUser={setUser} />
+       <Sidebar user={user} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <div className="main-content flex-grow-1 d-flex flex-column min-vh-100 bg-gray-100">
+        <Navbar user={user} setUser={setUser} setSidebarOpen={setSidebarOpen} />
         <main className="p-4 flex-grow-1">
           <Routes>
             <Route path="/" element={<Dashboard />} />

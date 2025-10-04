@@ -24,8 +24,6 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
 }
@@ -74,5 +72,22 @@ button:focus-visible {
   padding: 0;
 }
 
+/* Sidebar hidden on small screens */
+#sidenav-main {
+  transform: translateX(-110%);
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Sidebar visible when mobile-open is added */
+#sidenav-main.mobile-open {
+  transform: translateX(0);
+}
+
+/* On larger screens (desktop), keep it always visible */
+@media (min-width: 1200px) {
+  #sidenav-main {
+    transform: none;
+  }
+}
 
 
