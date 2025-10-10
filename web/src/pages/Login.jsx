@@ -18,17 +18,11 @@ export default function Login({ setUser }) {
     setLoading(true);
 
     try {
-      // 1. Login via auth.js (handles CSRF internally)
       await login(email, password, remember);
-
-      // 2. Fetch authenticated user
       const user = await getMe();
-
-      // 3. Store user locally (optional, keep minimal data only)
       localStorage.setItem("user", JSON.stringify(user));
       setUser(user);
-      
-      // 4. Show success + redirect
+
       setAlert({ type: "success", message: "Login successful — redirecting…" });
       setTimeout(() => navigate("/", { replace: true }), 800);
     } catch (err) {
@@ -36,7 +30,6 @@ export default function Login({ setUser }) {
         err?.response?.data?.message || err.message || "Login failed.";
       setAlert({ type: "danger", message: msg });
       setLoading(false);
-
       setTimeout(() => setAlert(null), 5000);
     }
   };
@@ -48,137 +41,202 @@ export default function Login({ setUser }) {
   };
 
   return (
-    <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center"
-      style={{ background: "linear-gradient(180deg, rgba(246,249,252,1) 0%, rgba(255,255,255,1) 100%)" }}>
-      <div className="row w-100 justify-content-center">
-        <div className="col-11 col-md-8 col-lg-5">
-          <div className="card shadow-sm border-radius-xl">
-            {/* Header */}
-            <div className="card-header text-center pt-4 pb-1 bg-transparent border-0">
-              <h4 className="mb-0 fw-bold">Login your account</h4>
-              <p className="text-muted small mb-0">Sign in to access your work hours dashboard</p>
-            </div>
+    <div
+      className="min-vh-100 d-flex align-items-center justify-content-center bg-light"
+      style={{
+        background:
+          "linear-gradient(180deg, #f8f9fe 0%, #ffffff 100%)",
+        padding: "1rem",
+      }}
+    >
+      <div
+        className="card shadow border-0 p-4 p-md-5 w-100"
+        style={{
+          maxWidth: 420,
+          borderRadius: "1.25rem",
+          animation: "fadeIn 0.6s ease",
+        }}
+      >
+        {/* Brand header */}
+        <div className="text-center mb-4">
+          <div
+            className="d-inline-flex align-items-center justify-content-center mb-3"
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: "50%",
+              background: "rgba(63, 81, 181, 0.1)",
+            }}
+          >
+            <i
+              className="material-symbols-rounded text-primary"
+              style={{ fontSize: 36 }}
+            >
+              lock_open
+            </i>
+          </div>
+          <h3 className="fw-bold mb-1" style={{ letterSpacing: "-0.5px" }}>
+            HorasKo
+          </h3>
+          <p className="text-muted small mb-0">
+            Login to access your dashboard.
+          </p>
+        </div>
 
-            <div className="card-body px-4 py-3">
-              {alert && (
-                <div className={`alert alert-${alert.type} mb-3 border-radius-md`} role="alert">
-                  {alert.message}
-                </div>
-              )}
+        {/* Alert */}
+        {alert && (
+          <div
+            className={`alert alert-${alert.type} py-2 text-center border-0`}
+            style={{ borderRadius: "0.75rem" }}
+          >
+            {alert.message}
+          </div>
+        )}
 
-              <form onSubmit={handleLogin}>
-                {/* Email */}
-                <div className="mb-3">
-                  <label className="form-label small fw-semibold">Email</label>
-                  <div className="input-group">
-                    <span className="input-group-text bg-transparent border-end-0">
-                      <i className="fas fa-envelope text-muted"></i>
-                    </span>
-                    <input
-                      type="email"
-                      className="form-control border-start-0"
-                      placeholder="name@company.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Password */}
-                <div className="mb-3">
-                  <label className="form-label small fw-semibold">Password</label>
-                  <div className="input-group">
-                    <span className="input-group-text bg-transparent border-end-0">
-                      <i className="fas fa-lock text-muted"></i>
-                    </span>
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      className="form-control border-start-0"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary ms-1"
-                      onClick={() => setShowPassword((s) => !s)}
-                    >
-                      {showPassword ? "Hide" : "Show"}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Remember + forgot */}
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="rememberMe"
-                      checked={remember}
-                      onChange={() => setRemember((r) => !r)}
-                    />
-                    <label className="form-check-label small" htmlFor="rememberMe">
-                      Remember me
-                    </label>
-                  </div>
-                  <div>
-                    <a href="/forgot" className="text-sm text-primary">Forgot password?</a>
-                  </div>
-                </div>
-
-                {/* Submit */}
-                <div className="d-grid mb-3">
-                  <button
-                    type="submit"
-                    className="btn bg-gradient-primary btn-lg"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2"></span>
-                        Signing in...
-                      </>
-                    ) : (
-                      "Sign in"
-                    )}
-                  </button>
-                </div>
-              </form>
-
-              {/* Divider */}
-              <div className="d-flex align-items-center mb-3">
-                <hr className="flex-grow-1" />
-                <small className="text-muted mx-2">or</small>
-                <hr className="flex-grow-1" />
-              </div>
-
-              {/* Google button */}
-              <div className="d-grid mb-2">
-                <button
-                  type="button"
-                  className="btn btn-outline-dark btn-lg d-flex align-items-center justify-content-center"
-                  onClick={handleGoogleLogin}
-                >
-                  <i className="fab fa-google me-2"></i> Continue with Google
-                </button>
-              </div>
-
-              {/* Signup link */}
-              <p className="text-center text-muted small mb-0 mt-2">
-                Don’t have an account?{" "}
-                <a href="/register" className="text-primary fw-bold">Sign up</a>
-              </p>
+        {/* Login form */}
+        <form onSubmit={handleLogin}>
+          <div className="mb-3">
+            <label className="form-label small fw-semibold text-secondary">
+              Email
+            </label>
+            <div className="input-group input-group-outline">
+              <span className="input-group-text bg-transparent border-end-0">
+                <i className="fas fa-envelope text-muted"></i>
+              </span>
+              <input
+                type="email"
+                className="form-control border-start-0"
+                placeholder="name@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
           </div>
 
-          <p className="text-center text-muted small mt-3">
-            By continuing, you agree to the <a href="/terms" className="text-primary">Terms</a> and <a href="/privacy" className="text-primary">Privacy Policy</a>.
+          <div className="mb-3">
+            <label className="form-label small fw-semibold text-secondary">
+              Password
+            </label>
+            <div className="input-group input-group-outline">
+              <span className="input-group-text bg-transparent border-end-0">
+                <i className="fas fa-lock text-muted"></i>
+              </span>
+              <input
+                type={showPassword ? "text" : "password"}
+                className="form-control border-start-0"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="btn btn-light border ms-1"
+                onClick={() => setShowPassword((s) => !s)}
+                style={{ borderRadius: "0.5rem" }}
+              >
+                <i className="material-symbols-rounded">
+                  {showPassword ? "visibility_off" : "visibility"}
+                </i>
+              </button>
+            </div>
+          </div>
+
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="rememberMe"
+                checked={remember}
+                onChange={() => setRemember((r) => !r)} 
+              />
+              <label className="form-check-label small" htmlFor="rememberMe">
+                Remember me
+              </label>
+            </div>
+            <a
+              href="/forgot"
+              className="text-sm text-primary text-decoration-none"
+            >
+              Forgot password?
+            </a>
+          </div>
+
+          <div className="d-grid mb-3">
+            <button
+              type="submit"
+              className="btn bg-gradient-primary btn-lg shadow-sm"
+              disabled={loading}
+              style={{ borderRadius: "0.75rem", fontWeight: 600 }}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2"></span>
+                  Signing in...
+                </>
+              ) : (
+                "Sign in"
+              )}
+            </button>
+          </div>
+
+          <div className="text-center my-3 position-relative">
+            <hr className="m-0" />
+            <span
+              className="bg-white px-3 position-absolute top-50 start-50 translate-middle text-muted small"
+              style={{ lineHeight: 1 }}
+            >
+              or
+            </span>
+          </div>
+
+          <div className="d-grid mt-4">
+            <button
+              type="button"
+              className="btn btn-outline-dark btn-lg d-flex align-items-center justify-content-center"
+              onClick={handleGoogleLogin}
+              style={{
+                borderRadius: "0.75rem",
+                fontWeight: 500,
+              }}
+            >
+              <i className="fab fa-google me-2"></i> Continue with Google
+            </button>
+          </div>
+
+          <p className="text-center text-muted small mt-4 mb-0">
+            Don’t have an account?{" "}
+            <a
+              href="/register"
+              className="text-primary fw-semibold text-decoration-none"
+            >
+              Sign up
+            </a>
           </p>
-        </div>
+        </form>
       </div>
+
+      {/* Animation */}
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+
+          @media (max-width: 576px) {
+            .card {
+              padding: 1.5rem !important;
+              border-radius: 1rem !important;
+            }
+            h3 {
+              font-size: 1.4rem;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 }
