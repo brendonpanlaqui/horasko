@@ -4,58 +4,45 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\WorkEntry;
+use Illuminate\Support\Facades\Auth;
 
 class WorkEntryController extends Controller {
     public function index(Request $request) {
-        $entries = WorkEntry::where('user_id', $request->user()->id)->get();
+        $user = $request->user();
 
-        return response()->json(['entries' => $entries]);
+        $today = now();
+
+        if ($today->day <= 15) {
+            // 1st to 15th
+            $start = $today->copy()->startOfMonth();
+            $end = $today->copy()->day(15)->endOfDay();
+        } else {
+            // 16th to last day of month
+            $start = $today->copy()->day(16)->startOfDay();
+            $end = $today->copy()->endOfMonth()->endOfDay();
+        }
+        $entries = WorkEntry::where('user_id', $user->id)
+            ->whereBetween('date', [$start, $end])
+            ->orderBy('date', 'desc')
+            ->get();
+
+        return response()->json($entries);
     }
 
     public function store(Request $request) {
         $validated = $request->validate([
-            'date' => 'required|integer',
-            'hours' => 'required|numeric|min:0.1',
+            'date' => 'required|date',
+            'hours' => 'required|numeric|min:1|max:24',
         ]);
 
-        $workEntry = WorkEntry::updateOrCreate(
+        $entry = WorkEntry::updateOrCreate(
             [
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'date' => $validated['date'],
             ],
-            [
-                'hours' => $validated['hours'],
-            ]
+            ['hours' => $validated['hours']]
         );
 
-        return response()->json(['message' => 'Entry saved', 'data' => $workEntry], 200);
-    }
-
-    public function sync(Request $request) {
-        $user = $request->user();
-
-        $entries = $request->all();
-
-        if (!is_array($entries)) {
-            return response()->json(['error' => 'Invalid data format.'], 422);
-        }
-
-        foreach ($entries as $entry) {
-            if (!isset($entry['date']) || !isset($entry['hours'])) {
-                continue;
-            }
-
-            WorkEntry::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'date' => $entry['date'],
-                ],
-                [
-                    'hours' => $entry['hours'],
-                ]
-            );
-        }
-
-        return response()->json(['message' => 'Entries synced successfully.']);
+        return response()->json($entry, 200);
     }
 }

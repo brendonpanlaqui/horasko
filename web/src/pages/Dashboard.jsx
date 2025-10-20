@@ -1,35 +1,25 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { fetchEntries, saveEntry } from "../api/entries";
 
 export default function Dashboard() {
-  const today = new Date();
+  // stable "today" so effects/memos don't re-run every render
+  const today = useMemo(() => new Date(), []);
+
+  const [workEntries, setWorkEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [alert, setAlert] = useState(null);
+  const [dateInput, setDateInput] = useState("");
+  const [hoursInput, setHoursInput] = useState("");
 
   // Payroll cutoff state
   const [payrollStart, setPayrollStart] = useState(1);
   const [payrollEnd, setPayrollEnd] = useState(15);
   const [currentCutoffLabel, setCurrentCutoffLabel] = useState("1-15");
 
-  const payrollStartDate = useMemo(
-    () => new Date(today.getFullYear(), today.getMonth(), payrollStart),
-    [today,payrollStart]
-  );
-
-  const payrollEndDate = useMemo(
-    () => new Date(today.getFullYear(), today.getMonth(), payrollEnd),
-    [today,payrollEnd]
-  );
-
-  const maxAllowedDate = payrollEndDate > today ? today : payrollEndDate;
-
-  // Form and entries state
-  const [dateInput, setDateInput] = useState("");
-  const [hoursInput, setHoursInput] = useState("");
-  const [workEntries, setWorkEntries] = useState([]);
-
-  // Alerts
-  const [alert, setAlert] = useState(null);
-
   const hourlyWage = 65.625;
 
+  // Determine current cutoff once on mount
   useEffect(() => {
     const day = today.getDate();
     const month = today.getMonth();
@@ -47,17 +37,60 @@ export default function Dashboard() {
     }
   }, [today]);
 
-  const addEntry = () => {
+  // payroll start/end dates (memoized)
+  const payrollStartDate = useMemo(
+    () => new Date(today.getFullYear(), today.getMonth(), payrollStart),
+    [today, payrollStart]
+  );
+  const payrollEndDate = useMemo(
+    () => new Date(today.getFullYear(), today.getMonth(), payrollEnd),
+    [today, payrollEnd]
+  );
+  const maxAllowedDate = payrollEndDate > today ? today : payrollEndDate;
+
+  // Helper: convert backend response to entries array safely
+  const normalizeEntries = (data) => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    // handle common wrappers (res.data, { entries: [...] }, { entry: {...} })
+    if (Array.isArray(data.data)) return data.data;
+    if (Array.isArray(data.entries)) return data.entries;
+    return [];
+  };
+
+  // Load entries from backend on mount
+  useEffect(() => {
+    const loadEntries = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchEntries(); // our entries API helper
+        const entries = normalizeEntries(data);
+        // ensure hours are numbers
+        setWorkEntries(entries.map((e) => ({ ...e, hours: Number(e.hours) })));
+      } catch (err) {
+        setAlert({ type: "danger", message: err || "Failed to load entries." });
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadEntries();
+  }, []);
+
+  // Format date to YYYY-MM-DD (accepts Date or string)
+  const formatDateLocal = (date) => {
+    const d = typeof date === "string" ? new Date(date) : date;
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  // Add or update entry (saves to backend)
+  const addEntry = async () => {
     const date = dateInput;
     const hours = parseFloat(hoursInput);
     const monthName = new Intl.DateTimeFormat("en-US", { month: "long" }).format(today);
 
-    const selectedDate = new Date(dateInput);
-
-    if (selectedDate < payrollStartDate || selectedDate > maxAllowedDate) {
-      setAlert({ type: "danger", message: "Inputted date is outside current cutoff." });
-      return;
-    }
     if (!date) {
       setAlert({
         type: "danger",
@@ -66,40 +99,53 @@ export default function Dashboard() {
       return;
     }
 
-    if (isNaN(hours) || hours <= 0 || hours > 24) {
-      setAlert({ type: "danger", message: "Please enter valid work hours, not zero (between 1 and 24)." });
+    const selectedDate = new Date(date);
+    if (selectedDate < payrollStartDate || selectedDate > maxAllowedDate) {
+      setAlert({ type: "danger", message: "Inputted date is outside current cutoff." });
       return;
     }
 
-    const newEntry = { date, hours };
-    const updatedEntries = [...workEntries.filter((e) => e.date !== date), newEntry];
+    if (isNaN(hours) || hours <= 0 || hours > 24) {
+      setAlert({ type: "danger", message: "Please enter valid work hours (1–24)." });
+      return;
+    }
 
-    setWorkEntries(updatedEntries);
-    setAlert({ type: "success", message: "Entry added/updated!" });
+    setIsSaving(true);
+    try {
+      const payload = { date, hours };
+      const saved = await saveEntry(payload); // backend returns saved entry or wrapper
 
-    setDateInput("");
-    setHoursInput("");
+      // try to extract saved entry from common response shapes
+      const savedEntry = (saved && (saved.entry || saved.data || saved)) || payload;
+      const normalized = { ...savedEntry, hours: Number(savedEntry.hours ?? hours) };
+
+      setWorkEntries((prev) => {
+        const filtered = prev.filter((e) => e.date !== normalized.date);
+        // keep sorting stable: we'll add and let UI sort when rendering
+        return [...filtered, normalized];
+      });
+
+      setAlert({ type: "success", message: "Entry saved successfully!" });
+      setDateInput("");
+      setHoursInput("");
+    } catch (err) {
+      setAlert({ type: "danger", message: err || "Failed to save entry." });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const totalHours = workEntries.reduce((acc, cur) => acc + cur.hours, 0);
+  // --- Summaries (ensure numeric arithmetic) ---
+  const totalHours = workEntries.reduce((acc, cur) => acc + Number(cur.hours || 0), 0);
   const estimatedPay = totalHours * hourlyWage;
 
-  // Extra UX: Weekly hours & average daily
   const startOfWeek = new Date(today);
   startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
   const hoursThisWeek = workEntries
     .filter((e) => new Date(e.date) >= startOfWeek)
-    .reduce((acc, cur) => acc + cur.hours, 0);
+    .reduce((acc, cur) => acc + Number(cur.hours || 0), 0);
 
-  const averageDailyHours =
-    workEntries.length > 0 ? (totalHours / workEntries.length).toFixed(2) : 0;
-
-  const formatDateLocal = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
+  const averageDailyHours = workEntries.length > 0 ? (totalHours / workEntries.length).toFixed(2) : 0;
 
   return (
     <div className="container-fluid py-4">
@@ -126,6 +172,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
         <div className="col-md-3 mb-4">
           <div className="card shadow-sm border-radius-xl text-center">
             <div className="card-body">
@@ -134,6 +181,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
         <div className="col-md-3 mb-4">
           <div className="card shadow-sm border-radius-xl text-center">
             <div className="card-body">
@@ -142,6 +190,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
         <div className="col-md-3 mb-4">
           <div className="card shadow-sm border-radius-xl text-center bg-gradient-success text-white">
             <div className="card-body">
@@ -174,11 +223,15 @@ export default function Dashboard() {
                 placeholder="e.g. 8"
                 value={hoursInput}
                 onChange={(e) => setHoursInput(e.target.value)}
-                min={1}    
+                min={1}
                 max={24}
               />
-              <button className="btn bg-gradient-primary w-100" onClick={addEntry}>
-                Add / Update
+              <button
+                className="btn bg-gradient-primary w-100"
+                onClick={addEntry}
+                disabled={isSaving}
+              >
+                {isSaving ? "Saving..." : "Add / Update"}
               </button>
             </div>
           </div>
@@ -191,7 +244,9 @@ export default function Dashboard() {
               <h6 className="text-dark fw-bold">Your Entries</h6>
             </div>
             <div className="card-body">
-              {workEntries.length === 0 ? (
+              {loading ? (
+                <p className="text-muted mb-0">Loading...</p>
+              ) : workEntries.length === 0 ? (
                 <p className="text-muted mb-0">No entries yet.</p>
               ) : (
                 <div className="table-responsive">
@@ -208,16 +263,17 @@ export default function Dashboard() {
                     </thead>
                     <tbody>
                       {workEntries
+                        .slice()
                         .sort((a, b) => new Date(a.date) - new Date(b.date))
                         .map((entry) => (
-                          <tr key={entry.date}>
+                          <tr key={`${entry.date}`}>
                             <td>
                               <span className="text-dark text-sm">
                                 {new Date(entry.date).toDateString()}
                               </span>
                             </td>
                             <td className="text-end text-dark text-sm fw-bold">
-                              {entry.hours}
+                              {Number(entry.hours).toFixed(2)}
                             </td>
                           </tr>
                         ))}

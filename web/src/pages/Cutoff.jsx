@@ -1,155 +1,165 @@
-function Cutoff() {
+import React from "react";
+
+export default function Cutoff() {
+  const cutoffs = [
+    {
+      name: "John Doe",
+      email: "john.doe@example.com",
+      hours: 80,
+      overtime: 5,
+      pay: "$800",
+      image: "../assets/img/team-2.jpg",
+    },
+    {
+      name: "Jane Smith",
+      email: "jane.smith@example.com",
+      hours: 76,
+      overtime: 2,
+      pay: "$760",
+      image: "../assets/img/team-4.jpg",
+    },
+  ];
+
   return (
     <div className="container-fluid py-4">
       <div className="row">
-        <div className="col-12">
-          <div className="card my-4">
-            <div className="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-              <div className="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-                <h6 className="text-white text-capitalize ps-3">Cutoff</h6>
+        {/* Header */}
+        <div className="col-12 mb-4 d-flex justify-content-between align-items-center">
+          <div>
+            <h5 className="fw-bold text-dark mb-1">Cutoff Summary</h5>
+            <p className="text-muted small mb-0">
+              Review work hours, overtime, and pay for the current cutoff period.
+            </p>
+          </div>
+          <button className="btn bg-gradient-primary shadow-sm d-flex align-items-center">
+            <span className="material-symbols-rounded me-2">history</span>
+            View History
+          </button>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="col-12 mb-4">
+          <div className="row g-3">
+            <div className="col-xl-4 col-sm-6">
+              <div className="card border-0 shadow-sm">
+                <div className="card-body d-flex justify-content-between align-items-center">
+                  <div>
+                    <p className="text-sm text-muted mb-1 fw-semibold">
+                      Current Cutoff
+                    </p>
+                    <h6 className="fw-bold text-dark mb-0">
+                      Sept 1 - Sept 15, 2025
+                    </h6>
+                  </div>
+                  <span className="material-symbols-rounded text-primary fs-2">
+                    schedule
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="card-body px-0 pb-2">
-              <div className="p-4">
-                {/* Info Cards */}
-                <div className="row mb-4">
-                  <div className="col-xl-4 col-sm-6 mb-4">
-                    <div className="card">
-                      <div className="card-body p-3">
-                        <div className="row">
-                          <div className="col-8">
-                            <div className="numbers">
-                              <p className="text-sm mb-0 text-capitalize font-weight-bold">Current Cutoff</p>
-                              <h5 className="font-weight-bolder mb-0">
-                                Sept 1 - Sept 15, 2025
-                              </h5>
-                            </div>
-                          </div>
-                          <div className="col-4 text-end">
-                            <div className="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                              <i className="ni ni-watch-time text-lg opacity-10" aria-hidden="true"></i>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-xl-4 col-sm-6 mb-4">
-                    <div className="card">
-                      <div className="card-body p-3">
-                        <div className="row">
-                          <div className="col-8">
-                            <div className="numbers">
-                              <p className="text-sm mb-0 text-capitalize font-weight-bold">Total Hours</p>
-                              <h5 className="font-weight-bolder mb-0">
-                                80
-                              </h5>
-                            </div>
-                          </div>
-                          <div className="col-4 text-end">
-                            <div className="icon icon-shape bg-gradient-success shadow text-center border-radius-md">
-                              <i className="ni ni-time-alarm text-lg opacity-10" aria-hidden="true"></i>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-xl-4 col-sm-6 mb-4">
-                    <div className="card">
-                      <div className="card-body p-3">
-                        <div className="row">
-                          <div className="col-8">
-                            <div className="numbers">
-                              <p className="text-sm mb-0 text-capitalize font-weight-bold">Overtime</p>
-                              <h5 className="font-weight-bolder mb-0">
-                                5
-                              </h5>
-                            </div>
-                          </div>
-                          <div className="col-4 text-end">
-                            <div className="icon icon-shape bg-gradient-info shadow text-center border-radius-md">
-                              <i className="ni ni-bold text-lg opacity-10" aria-hidden="true"></i>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Table for Cutoff Details */}
-                <div className="card">
-                  <div className="card-header pb-0">
-                    <h6>Cutoff Breakdown</h6>
-                    <p className="text-sm">
-                      <i className="fa fa-info text-info" aria-hidden="true"></i>
-                      Detailed view of employee hours and pay
+            <div className="col-xl-4 col-sm-6">
+              <div className="card border-0 shadow-sm">
+                <div className="card-body d-flex justify-content-between align-items-center">
+                  <div>
+                    <p className="text-sm text-muted mb-1 fw-semibold">
+                      Total Hours
                     </p>
+                    <h6 className="fw-bold text-dark mb-0">80</h6>
                   </div>
-                  <div className="card-body px-0 pt-0 pb-2">
-                    <div className="table-responsive p-0">
-                      <table className="table align-items-center mb-0">
-                        <thead>
-                          <tr>
-                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Employee</th>
-                            <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Total Hours</th>
-                            <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Overtime</th>
-                            <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Pay</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td>
-                              <div className="d-flex px-2 py-1">
-                                <div>
-                                  <img src="../assets/img/team-2.jpg" className="avatar avatar-sm me-3 border-radius-lg" alt="user1" />
-                                </div>
-                                <div className="d-flex flex-column justify-content-center">
-                                  <h6 className="mb-0 text-sm">John Doe</h6>
-                                  <p className="text-xs text-secondary mb-0">john.doe@example.com</p>
-                                </div>
-                              </div>
-                            </td>
-                            <td>
-                              <p className="text-xs font-weight-bold mb-0">80</p>
-                              <p className="text-xs text-secondary mb-0">Hours</p>
-                            </td>
-                            <td className="align-middle text-center text-sm">
-                              <span className="badge badge-sm bg-gradient-success">5</span>
-                            </td>
-                            <td className="align-middle text-center">
-                              <span className="text-secondary text-xs font-weight-bold">$800</span>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <div className="d-flex px-2 py-1">
-                                <div>
-                                  <img src="../assets/img/team-4.jpg" className="avatar avatar-sm me-3 border-radius-lg" alt="user2" />
-                                </div>
-                                <div className="d-flex flex-column justify-content-center">
-                                  <h6 className="mb-0 text-sm">Jane Smith</h6>
-                                  <p className="text-xs text-secondary mb-0">jane.smith@example.com</p>
-                                </div>
-                              </div>
-                            </td>
-                            <td>
-                              <p className="text-xs font-weight-bold mb-0">76</p>
-                              <p className="text-xs text-secondary mb-0">Hours</p>
-                            </td>
-                            <td className="align-middle text-center text-sm">
-                              <span className="badge badge-sm bg-gradient-success">2</span>
-                            </td>
-                            <td className="align-middle text-center">
-                              <span className="text-secondary text-xs font-weight-bold">$760</span>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+                  <span className="material-symbols-rounded text-success fs-2">
+                    schedule_add
+                  </span>
                 </div>
+              </div>
+            </div>
+
+            <div className="col-xl-4 col-sm-6">
+              <div className="card border-0 shadow-sm">
+                <div className="card-body d-flex justify-content-between align-items-center">
+                  <div>
+                    <p className="text-sm text-muted mb-1 fw-semibold">
+                      Overtime
+                    </p>
+                    <h6 className="fw-bold text-dark mb-0">5 hrs</h6>
+                  </div>
+                  <span className="material-symbols-rounded text-info fs-2">
+                    trending_up
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Cutoff Table */}
+        <div className="col-12">
+          <div className="card shadow-sm border-radius-xl">
+            <div className="card-header d-flex justify-content-between align-items-center">
+              <h6 className="fw-bold text-dark mb-0">Cutoff Breakdown</h6>
+              <div className="d-flex align-items-center">
+                <span className="material-symbols-rounded text-muted me-2">
+                  info
+                </span>
+                <p className="text-sm text-muted mb-0">Employee hours and pay</p>
+              </div>
+            </div>
+
+            <div className="card-body px-3 pt-0 pb-2">
+              <div className="table-responsive">
+                <table className="table align-items-center mb-0">
+                  <thead>
+                    <tr>
+                      <th className="text-secondary text-xs font-weight-bolder opacity-7">
+                        Employee
+                      </th>
+                      <th className="text-secondary text-xs font-weight-bolder opacity-7">
+                        Total Hours
+                      </th>
+                      <th className="text-center text-secondary text-xs font-weight-bolder opacity-7">
+                        Overtime
+                      </th>
+                      <th className="text-center text-secondary text-xs font-weight-bolder opacity-7">
+                        Pay
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cutoffs.map((c, i) => (
+                      <tr key={i}>
+                        <td>
+                          <div className="d-flex align-items-center">
+                            <img
+                              src={c.image}
+                              alt={c.name}
+                              className="avatar avatar-sm me-3 border-radius-lg"
+                            />
+                            <div className="d-flex flex-column">
+                              <h6 className="mb-0 text-sm">{c.name}</h6>
+                              <p className="text-xs text-muted mb-0">{c.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <p className="text-sm fw-bold text-dark mb-0">
+                            {c.hours}
+                          </p>
+                          <p className="text-xs text-muted mb-0">Hours</p>
+                        </td>
+                        <td className="text-center">
+                          <span className="badge bg-gradient-success">
+                            {c.overtime}
+                          </span>
+                        </td>
+                        <td className="text-center">
+                          <span className="text-dark text-sm fw-bold">
+                            {c.pay}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -158,5 +168,3 @@ function Cutoff() {
     </div>
   );
 }
-
-export default Cutoff;

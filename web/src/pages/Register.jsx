@@ -33,6 +33,12 @@ export default function Register() {
     }
   };
 
+  const handleGoogleLogin = () => {
+    const backendUrl =
+      import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+    window.location.href = `${backendUrl}/auth/google/redirect`;
+  };
+
   return (
     <div
       className="min-vh-100 d-flex align-items-center justify-content-center bg-light"
@@ -186,6 +192,7 @@ export default function Register() {
             <button
               type="button"
               className="btn btn-outline-dark btn-lg d-flex align-items-center justify-content-center"
+              onClick={handleGoogleLogin}
               style={{
                 borderRadius: "0.75rem",
                 fontWeight: 500,

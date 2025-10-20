@@ -18,7 +18,17 @@ function Sidebar({ sidebarOpen, setSidebarOpen}) {
           target="_blank"
           rel="noreferrer"
         >
-          <span className="ms-1 text-sm text-dark">Work Hours Tracker</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+            className="me-2 text-primary"
+          >
+            <path d="M12 1a11 11 0 1 0 11 11A11 11 0 0 0 12 1zm0 20a9 9 0 1 1 9-9a9 9 0 0 1-9 9zm.5-14h-1v6l5.25 3.15l.5-.86l-4.75-2.79z"/>
+          </svg>
+          <span className="ms-1 text-sm text-dark">HorasKo</span>
         </a>
 
       </div>
