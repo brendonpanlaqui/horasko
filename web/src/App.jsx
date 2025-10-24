@@ -40,7 +40,20 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  //remove if not demo
+  const isDemo =
+  (import.meta.env.VITE_DEMO_MODE === "true" || process.env.REACT_APP_DEMO_MODE === "true") &&
+  window.location.hostname !== "localhost";
+
   useEffect(() => {
+    //remove if not demo
+    if (isDemo) {
+      // Pretend to be logged in with a demo user
+      setUser({ name: "Demo User", email: "demo@example.com" });
+      setLoading(false);
+      return;
+    }
+    //remove if not demo
     getMe()
       .then((res) => setUser(res)) // Laravel returns user object
       .catch(() => setUser(null))  // Not logged in or token expired
