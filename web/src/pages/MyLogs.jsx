@@ -16,28 +16,30 @@ export default function MyLogs() {
   );
 
   return (
-    <div className="container-fluid py-2">
-      <div className="row">
+    <div className="container-fluid py-3">
+      <div className="row gy-3">
         {/* Header */}
-        <div className="col-12 mb-4">
-          <div className="d-flex justify-content-between align-items-center">
-            <h5 className="mb-0 text-dark fw-bold">My Logs</h5>
-            <button className="btn bg-gradient-success shadow-sm d-flex align-items-center">
+        <div className="col-12">
+          <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
+            <div>
+              <h5 className="mb-1 fw-bold text-dark">My Logs</h5>
+              <p className="text-muted small mb-0">
+                Review, edit, or remove your recorded work hours.
+              </p>
+            </div>
+            <button className="btn bg-gradient-success shadow-sm mt-2 mt-sm-0 d-flex align-items-center">
               <span className="material-symbols-rounded me-2">add_circle</span>
               Add Log
             </button>
           </div>
-          <p className="text-muted small mb-0">
-            Review, edit, or remove your recorded work hours.
-          </p>
         </div>
 
-        {/* Logs Table Card */}
+        {/* Logs Card */}
         <div className="col-12">
           <div className="card shadow-sm border-radius-xl">
-            <div className="card-header d-flex justify-content-between align-items-center">
-              <h6 className="text-dark fw-bold mb-0">Work Hours Logs</h6>
-              <div className="d-flex align-items-center">
+            <div className="card-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
+              <h6 className="text-dark fw-bold mb-2 mb-sm-0">Work Hours Logs</h6>
+              <div className="d-flex align-items-center w-100 w-sm-auto">
                 <span className="material-symbols-rounded text-muted me-2">
                   search
                 </span>
@@ -47,13 +49,14 @@ export default function MyLogs() {
                   placeholder="Search by date or notes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ maxWidth: "220px" }}
+                  style={{ maxWidth: "240px" }}
                 />
               </div>
             </div>
 
             <div className="card-body">
-              <div className="table-responsive">
+              {/* Desktop Table */}
+              <div className="table-responsive d-none d-md-block">
                 <table className="table align-items-center mb-0">
                   <thead>
                     <tr>
@@ -86,20 +89,14 @@ export default function MyLogs() {
                             </span>
                           </td>
                           <td>
-                            <span className="text-muted text-sm">
-                              {log.notes}
-                            </span>
+                            <span className="text-muted text-sm">{log.notes}</span>
                           </td>
                           <td className="text-end">
                             <button className="btn btn-sm btn-outline-primary me-2 d-inline-flex align-items-center">
-                              <span className="material-symbols-rounded">
-                                edit
-                              </span>
+                              <span className="material-symbols-rounded">edit</span>
                             </button>
                             <button className="btn btn-sm btn-outline-danger d-inline-flex align-items-center">
-                              <span className="material-symbols-rounded">
-                                delete
-                              </span>
+                              <span className="material-symbols-rounded">delete</span>
                             </button>
                           </td>
                         </tr>
@@ -113,6 +110,43 @@ export default function MyLogs() {
                     )}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="d-md-none">
+                {filteredLogs.length > 0 ? (
+                  filteredLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="border rounded-3 p-3 mb-3 shadow-sm bg-white"
+                    >
+                      <div className="d-flex justify-content-between align-items-start">
+                        <div>
+                          <h6 className="fw-bold text-dark mb-1">
+                            {new Date(log.date).toDateString()}
+                          </h6>
+                          <p className="text-muted mb-1">
+                            Hours Worked:{" "}
+                            <span className="fw-bold">{log.hours}</span>
+                          </p>
+                          <p className="text-muted small mb-2">
+                            Notes: {log.notes}
+                          </p>
+                        </div>
+                        <div className="d-flex">
+                          <button className="btn btn-sm btn-outline-primary me-2 d-inline-flex align-items-center">
+                            <span className="material-symbols-rounded">edit</span>
+                          </button>
+                          <button className="btn btn-sm btn-outline-danger d-inline-flex align-items-center">
+                            <span className="material-symbols-rounded">delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-muted py-3">No logs found.</p>
+                )}
               </div>
             </div>
           </div>

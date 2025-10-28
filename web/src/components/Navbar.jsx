@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Logout from "../pages/Logout";
 
-function Navbar({ user, setUser, setSidebarOpen }) {
+function Navbar({ user, setUser, setSidebarOpen, sidebarOpen  }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const location = useLocation();
 
@@ -28,6 +28,7 @@ function Navbar({ user, setUser, setSidebarOpen }) {
           {/* Right side items */}
           <ul className="navbar-nav d-flex align-items-center  justify-content-end">
             {/* Hamburger for small screens */}
+            {!sidebarOpen && (
             <li className="nav-item d-xl-none ps-3 d-flex align-items-center">
               <button
                 className="nav-link text-body p-0 bg-transparent border-0"
@@ -40,6 +41,7 @@ function Navbar({ user, setUser, setSidebarOpen }) {
                 </div>
               </button>
             </li>
+            )}
             <li className="nav-item px-3 d-flex align-items-center">
               <a href="javascript:;" className="nav-link text-body p-0">
                 <i className="material-symbols-rounded fixed-plugin-button-nav">settings</i>

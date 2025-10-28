@@ -21,7 +21,7 @@ function Layout({ user, setUser }) {
     <div className="d-flex w-100">
        <Sidebar user={user} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div className="main-content flex-grow-1 d-flex flex-column min-vh-100 bg-gray-100">
-        <Navbar user={user} setUser={setUser} setSidebarOpen={setSidebarOpen} />
+        <Navbar user={user} setUser={setUser} setSidebarOpen={setSidebarOpen} sidebarOpen={sidebarOpen} />
         <main className="p-4 flex-grow-1">
           <Routes>
             <Route path="/" element={<Dashboard />} />

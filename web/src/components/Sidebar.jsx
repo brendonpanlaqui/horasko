@@ -11,7 +11,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen}) {
       id="sidenav-main"
       className={`sidenav navbar navbar-vertical navbar-expand-xs border-radius-lg fixed-start ms-2 my-2 ps bg-white ${sidebarOpen ? "mobile-open" : ""}`}
     >
-      <div className="sidenav-header">
+      <div className="sidenav-header d-flex justify-content-between">
         <a
           className="navbar-brand px-4 py-3 m-0"
           href="https://github.com/brendonpanlaqui/work-hours-tracker"
@@ -30,7 +30,13 @@ function Sidebar({ sidebarOpen, setSidebarOpen}) {
           </svg>
           <span className="ms-1 text-sm text-dark">HorasKo</span>
         </a>
-
+        <button
+          className="btn btn-link text-dark d-xl-none fs-4 m-0"
+          onClick={() => setSidebarOpen(false)}
+          style={{ textDecoration: "none" }}
+        >
+          <i className="material-symbols-rounded">close</i>
+        </button>
       </div>
       <hr className="horizontal dark mt-0 mb-2" />
       <div className="collapse navbar-collapse w-auto" id="sidenav-collapse-main">
