@@ -1,20 +1,14 @@
 <?php
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route; 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\WorkEntryController;
-use App\Models\Holiday;
+use App\Http\Controllers\HolidayController;
 
-Route::get('/holidays', function() { 
-    return Holiday::orderBy('date')->get();
-});
-
-Route::get('/holidays/check/{date}', function ($date) {
-    $holiday = Holiday::whereDate('date', $date)->first();
-    return $holiday
-        ? response()->json(['isHoliday' => true, 'holiday' => $holiday])
-        : response()->json(['isHoliday' => false]);
-});
+Route::get('/holidays', [HolidayController::class, 'index']);
+Route::get('/holidays/check/{date}', [HolidayController::class, 'checkDate']);
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
