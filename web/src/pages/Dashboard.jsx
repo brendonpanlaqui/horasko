@@ -1,96 +1,98 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { fetchEntries, saveEntry } from "../api/entries";
+import { fetchHolidays } from "../api/holidays"; 
+
+// Helper to ensure we compare dates without Time/Timezone interference
+const toISODate = (date) => {
+  const d = new Date(date);
+  const offset = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - offset).toISOString().split("T")[0];
+};
 
 export default function Dashboard() {
-  // stable "today" so effects/memos don't re-run every render
+  // --- 1. SETUP & CONFIGURATION ---
+  // We use a stable reference for "now" to avoid second-tick re-renders
   const today = useMemo(() => new Date(), []);
+  const hourlyWage = 70;
 
+  // --- 2. STATE MANAGEMENT ---
   const [workEntries, setWorkEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [holidays, setHolidays] = useState([]);
+  const [status, setStatus] = useState({ loading: true, saving: false });
   const [alert, setAlert] = useState(null);
+  
   const [dateInput, setDateInput] = useState("");
   const [hoursInput, setHoursInput] = useState("");
 
-  // Payroll cutoff state
-  const [payrollStart, setPayrollStart] = useState(1);
-  const [payrollEnd, setPayrollEnd] = useState(15);
-  const [currentCutoffLabel, setCurrentCutoffLabel] = useState("1-15");
-
-  const hourlyWage = 65.625;
-
-  // Determine current cutoff once on mount
-  useEffect(() => {
+  // --- 3. DERIVED STATE (The Fix for your Bug) ---
+  // We calculate cutoff synchronusly. No useEffect needed. 
+  // This ensures 'payrollStart' is correct on the very first render.
+  const { payrollStart, payrollEnd, currentCutoffLabel, payrollStartDate, maxAllowedDate } = useMemo(() => {
     const day = today.getDate();
-    const month = today.getMonth();
     const year = today.getFullYear();
+    const month = today.getMonth();
+    
+    // Determine 1st or 2nd half of month
+    const isFirstCutoff = day <= 15;
+    const startDay = isFirstCutoff ? 1 : 16;
+    const endDay = isFirstCutoff ? 15 : new Date(year, month + 1, 0).getDate();
 
-    if (day <= 15) {
-      setPayrollStart(1);
-      setPayrollEnd(15);
-      setCurrentCutoffLabel("1-15");
-    } else {
-      const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
-      setPayrollStart(16);
-      setPayrollEnd(lastDayOfMonth);
-      setCurrentCutoffLabel(`16-${lastDayOfMonth}`);
-    }
+    // Construct Date Objects
+    const pStart = new Date(year, month, startDay);
+    const pEnd = new Date(year, month, endDay);
+    
+    // Max date is either the cutoff end OR today (cannot log future)
+    const maxDate = pEnd > today ? today : pEnd;
+
+    return {
+      payrollStart: startDay,
+      payrollEnd: endDay,
+      currentCutoffLabel: `${startDay}-${endDay}`,
+      payrollStartDate: pStart,
+      maxAllowedDate: maxDate
+    };
   }, [today]);
 
-  // payroll start/end dates (memoized)
-  const payrollStartDate = useMemo(
-    () => new Date(today.getFullYear(), today.getMonth(), payrollStart),
-    [today, payrollStart]
-  );
-  const payrollEndDate = useMemo(
-    () => new Date(today.getFullYear(), today.getMonth(), payrollEnd),
-    [today, payrollEnd]
-  );
-  const maxAllowedDate = payrollEndDate > today ? today : payrollEndDate;
-
-  // Helper: convert backend response to entries array safely
-  const normalizeEntries = (data) => {
-    if (!data) return [];
-    if (Array.isArray(data)) return data;
-    // handle common wrappers (res.data, { entries: [...] }, { entry: {...} })
-    if (Array.isArray(data.data)) return data.data;
-    if (Array.isArray(data.entries)) return data.entries;
-    return [];
-  };
-
-  // Load entries from backend on mount
+  // --- 4. DATA FETCHING ---
   useEffect(() => {
-    const loadEntries = async () => {
-      setLoading(true);
+    let isMounted = true;
+
+    const loadData = async () => {
       try {
-        const data = await fetchEntries(); // our entries API helper
-        const entries = normalizeEntries(data);
-        // ensure hours are numbers
-        setWorkEntries(entries.map((e) => ({ ...e, hours: Number(e.hours) })));
+        // Parallel fetching for performance
+        const [entriesData, holidaysData] = await Promise.all([
+          fetchEntries(),
+          fetchHolidays()
+        ]);
+
+        if (isMounted) {
+          setWorkEntries(entriesData.map((e) => ({ ...e, hours: Number(e.hours) })));
+          setHolidays(holidaysData || []);
+          setStatus((prev) => ({ ...prev, loading: false }));
+        }
       } catch (err) {
-        setAlert({ type: "danger", message: err || "Failed to load entries." });
-      } finally {
-        setLoading(false);
+        if (isMounted) {
+          setAlert({ type: "danger", message: "Failed to load data." });
+          setStatus((prev) => ({ ...prev, loading: false }));
+        }
       }
     };
-    loadEntries();
+
+    loadData();
+    return () => { isMounted = false; };
   }, []);
 
-  // Format date to YYYY-MM-DD (accepts Date or string)
-  const formatDateLocal = (date) => {
-    const d = typeof date === "string" ? new Date(date) : date;
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
+  // --- 5. HANDLERS ---
+  const formatDateLocal = (date) => toISODate(date);
 
-  // Add or update entry (saves to backend)
   const addEntry = async () => {
+    setAlert(null); // Clear previous alerts
+    
     const date = dateInput;
     const hours = parseFloat(hoursInput);
     const monthName = new Intl.DateTimeFormat("en-US", { month: "long" }).format(today);
 
+    // Validation
     if (!date) {
       setAlert({
         type: "danger",
@@ -99,8 +101,8 @@ export default function Dashboard() {
       return;
     }
 
-    const selectedDate = new Date(date);
-    if (selectedDate < payrollStartDate || selectedDate > maxAllowedDate) {
+    // String comparison is safer than Date object comparison for boundaries
+    if (date < toISODate(payrollStartDate) || date > toISODate(maxAllowedDate)) {
       setAlert({ type: "danger", message: "Inputted date is outside current cutoff." });
       return;
     }
@@ -110,18 +112,19 @@ export default function Dashboard() {
       return;
     }
 
-    setIsSaving(true);
+    setStatus((prev) => ({ ...prev, saving: true }));
+
     try {
       const payload = { date, hours };
-      const saved = await saveEntry(payload); // backend returns saved entry or wrapper
+      const saved = await saveEntry(payload);
 
-      // try to extract saved entry from common response shapes
+      // Handle backend response or fallback to payload
       const savedEntry = (saved && (saved.entry || saved.data || saved)) || payload;
       const normalized = { ...savedEntry, hours: Number(savedEntry.hours ?? hours) };
 
+      // Optimistic UI Update
       setWorkEntries((prev) => {
         const filtered = prev.filter((e) => e.date !== normalized.date);
-        // keep sorting stable: we'll add and let UI sort when rendering
         return [...filtered, normalized];
       });
 
@@ -129,24 +132,31 @@ export default function Dashboard() {
       setDateInput("");
       setHoursInput("");
     } catch (err) {
-      setAlert({ type: "danger", message: err || "Failed to save entry." });
+      setAlert({ type: "danger", message: err.message || "Failed to save entry." });
     } finally {
-      setIsSaving(false);
+      setStatus((prev) => ({ ...prev, saving: false }));
     }
   };
 
-  // --- Summaries (ensure numeric arithmetic) ---
-  const totalHours = workEntries.reduce((acc, cur) => acc + Number(cur.hours || 0), 0);
-  const estimatedPay = totalHours * hourlyWage;
+  // --- 6. CALCULATIONS (Summaries) ---
+  const totalHours = workEntries.reduce((acc, cur) => acc + (cur.hours || 0), 0);
+
+  const estimatedPay = workEntries.reduce((acc, entry) => {
+    const holiday = holidays.find((h) => h.date === entry.date);
+    const multiplier = holiday?.multiplier || 1;
+    return acc + (entry.hours || 0) * hourlyWage * multiplier;
+  }, 0);
 
   const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
+  startOfWeek.setDate(today.getDate() - today.getDay());
+  
   const hoursThisWeek = workEntries
     .filter((e) => new Date(e.date) >= startOfWeek)
-    .reduce((acc, cur) => acc + Number(cur.hours || 0), 0);
+    .reduce((acc, cur) => acc + (cur.hours || 0), 0);
 
   const averageDailyHours = workEntries.length > 0 ? (totalHours / workEntries.length).toFixed(2) : 0;
 
+  // --- 7. EXACT UI RENDER ---
   return (
     <div className="container-fluid py-4">
       <div className="row">
@@ -163,7 +173,7 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Quick Stats - 4 Cards */}
+        {/* Stats Cards */}
         <div className="col-md-3 mb-4">
           <div className="card shadow-sm border-radius-xl text-center">
             <div className="card-body">
@@ -229,9 +239,9 @@ export default function Dashboard() {
               <button
                 className="btn bg-gradient-primary w-100"
                 onClick={addEntry}
-                disabled={isSaving}
+                disabled={status.saving}
               >
-                {isSaving ? "Saving..." : "Add / Update"}
+                {status.saving ? "Saving..." : "Add / Update"}
               </button>
             </div>
           </div>
@@ -244,7 +254,7 @@ export default function Dashboard() {
               <h6 className="text-dark fw-bold">Your Entries</h6>
             </div>
             <div className="card-body">
-              {loading ? (
+              {status.loading ? (
                 <p className="text-muted mb-0">Loading...</p>
               ) : workEntries.length === 0 ? (
                 <p className="text-muted mb-0">No entries yet.</p>
@@ -253,30 +263,34 @@ export default function Dashboard() {
                   <table className="table align-items-center mb-0">
                     <thead>
                       <tr>
-                        <th className="text-secondary text-xs font-weight-bolder opacity-7">
-                          Date
-                        </th>
-                        <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">
-                          Hours
-                        </th>
+                        <th className="text-secondary text-xs font-weight-bolder opacity-7">Date</th>
+                        <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">Hours</th>
                       </tr>
                     </thead>
                     <tbody>
                       {workEntries
                         .slice()
                         .sort((a, b) => new Date(a.date) - new Date(b.date))
-                        .map((entry) => (
-                          <tr key={`${entry.date}`}>
-                            <td>
-                              <span className="text-dark text-sm">
-                                {new Date(entry.date).toDateString()}
-                              </span>
-                            </td>
-                            <td className="text-end text-dark text-sm fw-bold">
-                              {Number(entry.hours).toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
+                        .map((entry) => {
+                          const holiday = holidays.find(h => h.date === entry.date);
+                          return (
+                            <tr key={entry.date}>
+                              <td>
+                                <span className="text-dark text-sm">
+                                  {new Date(entry.date).toDateString()}
+                                </span>
+                                {holiday && (
+                                  <span className="badge bg-warning ms-2">
+                                    x{holiday.multiplier}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="text-end text-dark text-sm fw-bold">
+                                {Number(entry.hours).toFixed(2)}
+                              </td>
+                            </tr>
+                          );
+                        })}
                     </tbody>
                   </table>
                 </div>

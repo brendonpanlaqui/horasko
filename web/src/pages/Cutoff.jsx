@@ -3,22 +3,26 @@ import React from "react";
 export default function Cutoff() {
   const cutoffs = [
     {
-      name: "John Doe",
-      email: "john.doe@example.com",
-      hours: 80,
-      overtime: 5,
-      pay: "₱5,250.00",
-      image: "../assets/img/team-2.jpg",
+      period: "Oct 16-31, 2025",
+      totalHours: 80,
+      regularHours: 75,
+      holidayHours: 5,
+      overtime: 2,
+      payable: "₱5,250.00",
     },
     {
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      hours: 76,
-      overtime: 2,
-      pay: "₱4,987.50",
-      image: "../assets/img/team-4.jpg",
+      period: "Nov 1-16, 2025",
+      totalHours: 76,
+      regularHours: 72,
+      holidayHours: 4,
+      overtime: 3,
+      payable: "₱4,987.50",
     },
   ];
+
+  const totalHours = cutoffs.reduce((sum, c) => sum + c.totalHours, 0);
+  const totalOvertime = cutoffs.reduce((sum, c) => sum + c.overtime, 0);
+  const currentCutoffPayable = cutoffs[cutoffs.length - 1].payable;
 
   return (
     <div className="container-fluid py-4">
@@ -45,11 +49,9 @@ export default function Cutoff() {
                 <div className="card-body d-flex justify-content-between align-items-center">
                   <div>
                     <p className="text-muted text-uppercase small mb-1 fw-semibold">
-                      Current Cutoff
+                      Current Cutoff Payable
                     </p>
-                    <h6 className="fw-bold text-dark mb-0">
-                      Oct 16 – Oct 31, 2025
-                    </h6>
+                    <h6 className="fw-bold text-dark mb-0">{currentCutoffPayable}</h6>
                   </div>
                   <span className="material-symbols-rounded text-primary fs-2">
                     schedule
@@ -65,7 +67,7 @@ export default function Cutoff() {
                     <p className="text-muted text-uppercase small mb-1 fw-semibold">
                       Total Hours
                     </p>
-                    <h6 className="fw-bold text-dark mb-0">156 hrs</h6>
+                    <h6 className="fw-bold text-dark mb-0">{totalHours} hrs</h6>
                   </div>
                   <span className="material-symbols-rounded text-success fs-2">
                     schedule_add
@@ -79,9 +81,9 @@ export default function Cutoff() {
                 <div className="card-body d-flex justify-content-between align-items-center">
                   <div>
                     <p className="text-muted text-uppercase small mb-1 fw-semibold">
-                      Overtime
+                      Total Overtime
                     </p>
-                    <h6 className="fw-bold text-dark mb-0">8 hrs</h6>
+                    <h6 className="fw-bold text-dark mb-0">{totalOvertime} hrs</h6>
                   </div>
                   <span className="material-symbols-rounded text-info fs-2">
                     trending_up
@@ -99,7 +101,7 @@ export default function Cutoff() {
               <h6 className="fw-bold text-dark mb-0">Cutoff Breakdown</h6>
               <div className="d-flex align-items-center text-muted small">
                 <span className="material-symbols-rounded me-1">info</span>
-                Employee work hours and pay details
+                Work hours and pay details per cutoff
               </div>
             </div>
             <div className="card-body pt-0">
@@ -108,13 +110,16 @@ export default function Cutoff() {
                   <thead>
                     <tr>
                       <th className="text-secondary text-xs font-weight-bolder opacity-7">
-                        Employee
-                      </th>
-                      <th className="text-secondary text-xs font-weight-bolder opacity-7">
-                        Email
+                        Cutoff Period
                       </th>
                       <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">
-                        Hours
+                        Total Hours
+                      </th>
+                      <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">
+                        Regular Hours
+                      </th>
+                      <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">
+                        Holiday Hours
                       </th>
                       <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">
                         Overtime
@@ -125,30 +130,14 @@ export default function Cutoff() {
                     </tr>
                   </thead>
                   <tbody>
-                    {cutoffs.map((cutoff, index) => (
+                    {cutoffs.map((c, index) => (
                       <tr key={index}>
-                        <td className="d-flex align-items-center">
-                          <img
-                            src={cutoff.image}
-                            alt={cutoff.name}
-                            className="avatar avatar-sm me-2 border-radius-lg"
-                          />
-                          <span className="text-dark text-sm fw-semibold">
-                            {cutoff.name}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="text-muted text-sm">{cutoff.email}</span>
-                        </td>
-                        <td className="text-end fw-bold text-dark text-sm">
-                          {cutoff.hours}
-                        </td>
-                        <td className="text-end fw-bold text-dark text-sm">
-                          {cutoff.overtime}
-                        </td>
-                        <td className="text-end fw-bold text-success text-sm">
-                          {cutoff.pay}
-                        </td>
+                        <td className="text-dark text-sm fw-semibold">{c.period}</td>
+                        <td className="text-end fw-bold text-dark text-sm">{c.totalHours}</td>
+                        <td className="text-end fw-bold text-dark text-sm">{c.regularHours}</td>
+                        <td className="text-end fw-bold text-dark text-sm">{c.holidayHours}</td>
+                        <td className="text-end fw-bold text-dark text-sm">{c.overtime}</td>
+                        <td className="text-end fw-bold text-success text-sm">{c.payable}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -160,31 +149,26 @@ export default function Cutoff() {
 
         {/* Mobile Cards */}
         <div className="col-12 d-md-none">
-          {cutoffs.map((cutoff, index) => (
+          {cutoffs.map((c, index) => (
             <div
               key={index}
               className="border rounded-3 p-3 mb-3 shadow-sm bg-white"
             >
-              <div className="d-flex align-items-center mb-2">
-                <img
-                  src={cutoff.image}
-                  alt={cutoff.name}
-                  className="avatar avatar-sm me-2 border-radius-lg"
-                />
-                <div>
-                  <h6 className="fw-bold text-dark mb-0">{cutoff.name}</h6>
-                  <p className="text-muted small mb-0">{cutoff.email}</p>
-                </div>
-              </div>
+              <h6 className="fw-bold text-dark mb-2">{c.period}</h6>
               <p className="text-muted small mb-1">
-                Hours: <span className="fw-bold text-dark">{cutoff.hours}</span>
+                Total Hours: <span className="fw-bold text-dark">{c.totalHours}</span>
               </p>
               <p className="text-muted small mb-1">
-                Overtime:{" "}
-                <span className="fw-bold text-dark">{cutoff.overtime}</span>
+                Regular Hours: <span className="fw-bold text-dark">{c.regularHours}</span>
+              </p>
+              <p className="text-muted small mb-1">
+                Holiday Hours: <span className="fw-bold text-dark">{c.holidayHours}</span>
+              </p>
+              <p className="text-muted small mb-1">
+                Overtime: <span className="fw-bold text-dark">{c.overtime}</span>
               </p>
               <p className="text-muted small mb-0">
-                Pay: <span className="fw-bold text-success">{cutoff.pay}</span>
+                Pay: <span className="fw-bold text-success">{c.payable}</span>
               </p>
             </div>
           ))}
@@ -193,8 +177,7 @@ export default function Cutoff() {
         {/* Footer Note */}
         <div className="col-12 text-center text-muted small mt-3">
           <p className="mb-0">
-            Showing data for current cutoff only. Use “View History” to review
-            previous payrolls.
+            Showing data for current and previous cutoffs. Use “View History” for full payroll review.
           </p>
         </div>
       </div>

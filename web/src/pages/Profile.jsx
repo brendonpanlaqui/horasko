@@ -1,17 +1,19 @@
 import React from "react";
+import { getMe } from "../api/auth";
 
-export default function Profile() {
+export default function Profile({ user, setUser }) {
+  
   return (
     <div className="container-fluid py-4">
       {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="col-12 mb-4 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
         <div>
           <h5 className="fw-bold text-dark mb-1">My Profile</h5>
           <p className="text-muted small mb-0">
             Manage your account information and preferences
           </p>
         </div>
-        <button className="btn bg-gradient-primary shadow-sm d-flex align-items-center">
+        <button className="btn bg-gradient-primary shadow-sm d-flex align-items-center mt-2 mt-sm-0">
           <span className="material-symbols-rounded me-2">edit</span>
           Edit Profile
         </button>

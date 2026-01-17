@@ -6,6 +6,11 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
 {
+    protected function schedule(Schedule $schedule)
+    {
+        // Fetch new holidays every January 1st
+        $schedule->command('holidays:fetch')->yearlyOn(1, 1, '00:00');
+    }
     /**
      * The application's global HTTP middleware stack.
      *
