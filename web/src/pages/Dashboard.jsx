@@ -1,25 +1,26 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { fetchEntries, saveEntry } from "../api/entries";
+import { fetchHolidays } from "../api/holidays"; 
 
 export default function Dashboard() {
-  // stable "today" so effects/memos don't re-run every render
   const today = useMemo(() => new Date(), []);
 
   const [workEntries, setWorkEntries] = useState([]);
+  const [holidays, setHolidays] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState(null);
   const [dateInput, setDateInput] = useState("");
   const [hoursInput, setHoursInput] = useState("");
 
-  // Payroll cutoff state
+  // Payroll cutoff
   const [payrollStart, setPayrollStart] = useState(1);
   const [payrollEnd, setPayrollEnd] = useState(15);
   const [currentCutoffLabel, setCurrentCutoffLabel] = useState("1-15");
 
-  const hourlyWage = 65.625;
+  const hourlyWage = 68.75;
 
-  // Determine current cutoff once on mount
+  // Determine current cutoff
   useEffect(() => {
     const day = today.getDate();
     const month = today.getMonth();
@@ -37,7 +38,6 @@ export default function Dashboard() {
     }
   }, [today]);
 
-  // payroll start/end dates (memoized)
   const payrollStartDate = useMemo(
     () => new Date(today.getFullYear(), today.getMonth(), payrollStart),
     [today, payrollStart]
@@ -48,35 +48,6 @@ export default function Dashboard() {
   );
   const maxAllowedDate = payrollEndDate > today ? today : payrollEndDate;
 
-  // Helper: convert backend response to entries array safely
-  const normalizeEntries = (data) => {
-    if (!data) return [];
-    if (Array.isArray(data)) return data;
-    // handle common wrappers (res.data, { entries: [...] }, { entry: {...} })
-    if (Array.isArray(data.data)) return data.data;
-    if (Array.isArray(data.entries)) return data.entries;
-    return [];
-  };
-
-  // Load entries from backend on mount
-  useEffect(() => {
-    const loadEntries = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchEntries(); // our entries API helper
-        const entries = normalizeEntries(data);
-        // ensure hours are numbers
-        setWorkEntries(entries.map((e) => ({ ...e, hours: Number(e.hours) })));
-      } catch (err) {
-        setAlert({ type: "danger", message: err || "Failed to load entries." });
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadEntries();
-  }, []);
-
-  // Format date to YYYY-MM-DD (accepts Date or string)
   const formatDateLocal = (date) => {
     const d = typeof date === "string" ? new Date(date) : date;
     const year = d.getFullYear();
@@ -85,7 +56,35 @@ export default function Dashboard() {
     return `${year}-${month}-${day}`;
   };
 
-  // Add or update entry (saves to backend)
+  // Load entries
+  useEffect(() => {
+    const loadEntries = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchEntries();
+        setWorkEntries(
+          data.map((e) => ({ ...e, hours: Number(e.hours) }))
+        );
+      } catch (err) {
+        setAlert({ type: "danger", message: err || "Failed to load entries." });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const loadHolidays = async () => {
+      try {
+        const data = await fetchHolidays(); 
+        setHolidays(data);
+      } catch (err) {
+        console.error("Failed to load holidays", err);
+      }
+    };
+
+    loadEntries();
+    loadHolidays();
+  }, []);
+
   const addEntry = async () => {
     const date = dateInput;
     const hours = parseFloat(hoursInput);
@@ -113,15 +112,13 @@ export default function Dashboard() {
     setIsSaving(true);
     try {
       const payload = { date, hours };
-      const saved = await saveEntry(payload); // backend returns saved entry or wrapper
+      const saved = await saveEntry(payload);
 
-      // try to extract saved entry from common response shapes
       const savedEntry = (saved && (saved.entry || saved.data || saved)) || payload;
       const normalized = { ...savedEntry, hours: Number(savedEntry.hours ?? hours) };
 
       setWorkEntries((prev) => {
         const filtered = prev.filter((e) => e.date !== normalized.date);
-        // keep sorting stable: we'll add and let UI sort when rendering
         return [...filtered, normalized];
       });
 
@@ -135,12 +132,18 @@ export default function Dashboard() {
     }
   };
 
-  // --- Summaries (ensure numeric arithmetic) ---
+  // --- Summaries ---
   const totalHours = workEntries.reduce((acc, cur) => acc + Number(cur.hours || 0), 0);
-  const estimatedPay = totalHours * hourlyWage;
+
+  // Compute estimated pay with holiday multiplier
+  const estimatedPay = workEntries.reduce((acc, entry) => {
+    const holiday = holidays.find((h) => h.date === entry.date);
+    const multiplier = holiday?.multiplier || 1;
+    return acc + Number(entry.hours || 0) * hourlyWage * multiplier;
+  }, 0);
 
   const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
+  startOfWeek.setDate(today.getDate() - today.getDay());
   const hoursThisWeek = workEntries
     .filter((e) => new Date(e.date) >= startOfWeek)
     .reduce((acc, cur) => acc + Number(cur.hours || 0), 0);
@@ -163,7 +166,7 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Quick Stats - 4 Cards */}
+        {/* Stats Cards */}
         <div className="col-md-3 mb-4">
           <div className="card shadow-sm border-radius-xl text-center">
             <div className="card-body">
@@ -253,30 +256,34 @@ export default function Dashboard() {
                   <table className="table align-items-center mb-0">
                     <thead>
                       <tr>
-                        <th className="text-secondary text-xs font-weight-bolder opacity-7">
-                          Date
-                        </th>
-                        <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">
-                          Hours
-                        </th>
+                        <th className="text-secondary text-xs font-weight-bolder opacity-7">Date</th>
+                        <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">Hours</th>
                       </tr>
                     </thead>
                     <tbody>
                       {workEntries
                         .slice()
                         .sort((a, b) => new Date(a.date) - new Date(b.date))
-                        .map((entry) => (
-                          <tr key={`${entry.date}`}>
-                            <td>
-                              <span className="text-dark text-sm">
-                                {new Date(entry.date).toDateString()}
-                              </span>
-                            </td>
-                            <td className="text-end text-dark text-sm fw-bold">
-                              {Number(entry.hours).toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
+                        .map((entry) => {
+                          const holiday = holidays.find(h => h.date === entry.date);
+                          return (
+                            <tr key={entry.date}>
+                              <td>
+                                <span className="text-dark text-sm">
+                                  {new Date(entry.date).toDateString()}
+                                </span>
+                                {holiday && (
+                                  <span className="badge bg-warning ms-2">
+                                    x{holiday.multiplier}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="text-end text-dark text-sm fw-bold">
+                                {Number(entry.hours).toFixed(2)}
+                              </td>
+                            </tr>
+                          );
+                        })}
                     </tbody>
                   </table>
                 </div>

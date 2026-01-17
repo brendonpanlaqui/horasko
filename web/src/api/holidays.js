@@ -15,21 +15,11 @@ const handleError = (error, defaultMessage) => {
   return defaultMessage;
 };
 
-export const fetchEntries = async () => {
+export const fetchHolidays = async () => {
   try {
-    const res = await api.get("/api/work-entries");
+    const res = await api.get("/api/holidays");
     return res.data;
   } catch (error) {
     throw handleError(error, "Failed to load entries");
-  }
-};
-
-export const saveEntry = async (data) => {
-  try {
-    await getCsrf();
-    const res = await api.post("/api/work-entries", data);
-    return res.data;
-  } catch (error) {
-    throw handleError(error, "Failed to save entry");
   }
 };
