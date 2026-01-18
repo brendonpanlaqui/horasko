@@ -14,7 +14,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen}) {
       <div className="sidenav-header d-flex justify-content-between">
         <a
           className="navbar-brand px-4 py-3 m-0"
-          href="https://github.com/brendonpanlaqui/work-hours-tracker"
+          href="https://github.com/brendonpanlaquihorasko"
           target="_blank"
           rel="noreferrer"
         >
