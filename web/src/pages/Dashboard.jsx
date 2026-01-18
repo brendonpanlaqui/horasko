@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { fetchEntries, saveEntry } from "../api/entries";
 import { fetchHolidays } from "../api/holidays"; 
 
-// Helper to ensure we compare dates without Time/Timezone interference
+// converts to simple string like "YYYY-MM-DD" in local timezone
 const toISODate = (date) => {
   const d = new Date(date);
   const offset = d.getTimezoneOffset() * 60000;
@@ -10,12 +10,13 @@ const toISODate = (date) => {
 };
 
 export default function Dashboard() {
-  // --- 1. SETUP & CONFIGURATION ---
+  // --- SETUP & CONFIGURATION ---
   // We use a stable reference for "now" to avoid second-tick re-renders
   const today = useMemo(() => new Date(), []);
   const hourlyWage = 70;
+  const OT_PREMIUM = 1.25;
 
-  // --- 2. STATE MANAGEMENT ---
+  // --- STATE MANAGEMENT ---
   const [workEntries, setWorkEntries] = useState([]);
   const [holidays, setHolidays] = useState([]);
   const [status, setStatus] = useState({ loading: true, saving: false });
@@ -28,22 +29,24 @@ export default function Dashboard() {
   // We calculate cutoff synchronusly. No useEffect needed. 
   // This ensures 'payrollStart' is correct on the very first render.
   const { payrollStart, payrollEnd, currentCutoffLabel, payrollStartDate, maxAllowedDate } = useMemo(() => {
+    // get today's day, month, year
     const day = today.getDate();
     const year = today.getFullYear();
     const month = today.getMonth();
     
-    // Determine 1st or 2nd half of month
+    // determine cutoff range (1-15 or 16-end)
     const isFirstCutoff = day <= 15;
     const startDay = isFirstCutoff ? 1 : 16;
-    const endDay = isFirstCutoff ? 15 : new Date(year, month + 1, 0).getDate();
+    const endDay = isFirstCutoff ? 15 : new Date(year, month + 1, 0).getDate(); //if second half, get last day of month
 
-    // Construct Date Objects
+    // set the limits
     const pStart = new Date(year, month, startDay);
     const pEnd = new Date(year, month, endDay);
     
-    // Max date is either the cutoff end OR today (cannot log future)
+    // no future logging allowed, max is today only
     const maxDate = pEnd > today ? today : pEnd;
 
+    // variables returned for use in UI
     return {
       payrollStart: startDay,
       payrollEnd: endDay,
@@ -53,18 +56,19 @@ export default function Dashboard() {
     };
   }, [today]);
 
-  // --- 4. DATA FETCHING ---
+  // --- DATA FETCHING ---
   useEffect(() => {
     let isMounted = true;
 
     const loadData = async () => {
       try {
-        // Parallel fetching for performance
+        // Promise.all runs both requests at the EXACT same time, instead of waiting for one to finish before starting the next
         const [entriesData, holidaysData] = await Promise.all([
           fetchEntries(),
           fetchHolidays()
         ]);
 
+        // check isMounted, if user leaves the page before fetch completes, we don't try to update state, avoiding memory leaks
         if (isMounted) {
           setWorkEntries(entriesData.map((e) => ({ ...e, hours: Number(e.hours) })));
           setHolidays(holidaysData || []);
@@ -79,11 +83,22 @@ export default function Dashboard() {
     };
 
     loadData();
-    return () => { isMounted = false; };
+    return () => { isMounted = false; }; //cleanup function
   }, []);
 
-  // --- 5. HANDLERS ---
+  // --- HANDLERS ---
   const formatDateLocal = (date) => toISODate(date);
+
+  useEffect(() => {
+    if (alert) {
+      const timer = setTimeout(() => {
+        setAlert(null);
+      }, 3000); // 3000 milliseconds = 3 seconds
+
+      // Cleanup function to prevent memory leaks if user leaves page
+      return () => clearTimeout(timer);
+    }
+  }, [alert]);
 
   const addEntry = async () => {
     setAlert(null); // Clear previous alerts
@@ -101,7 +116,7 @@ export default function Dashboard() {
       return;
     }
 
-    // String comparison is safer than Date object comparison for boundaries
+    // safest way to check dates using STRINGS in "YYYY-MM-DD" format
     if (date < toISODate(payrollStartDate) || date > toISODate(maxAllowedDate)) {
       setAlert({ type: "danger", message: "Inputted date is outside current cutoff." });
       return;
@@ -118,11 +133,10 @@ export default function Dashboard() {
       const payload = { date, hours };
       const saved = await saveEntry(payload);
 
-      // Handle backend response or fallback to payload
       const savedEntry = (saved && (saved.entry || saved.data || saved)) || payload;
       const normalized = { ...savedEntry, hours: Number(savedEntry.hours ?? hours) };
 
-      // Optimistic UI Update
+      // manually add the new entry to local state
       setWorkEntries((prev) => {
         const filtered = prev.filter((e) => e.date !== normalized.date);
         return [...filtered, normalized];
@@ -138,13 +152,27 @@ export default function Dashboard() {
     }
   };
 
-  // --- 6. CALCULATIONS (Summaries) ---
+  // --- CALCULATIONS (Summaries) ---
   const totalHours = workEntries.reduce((acc, cur) => acc + (cur.hours || 0), 0);
 
+  // check if that date matches any holiday, apply multiplier if so
   const estimatedPay = workEntries.reduce((acc, entry) => {
     const holiday = holidays.find((h) => h.date === entry.date);
     const multiplier = holiday?.multiplier || 1;
-    return acc + (entry.hours || 0) * hourlyWage * multiplier;
+    
+    const hours = Number(entry.hours || 0);
+    
+    // split hours into Regular (first 8) and Overtime (excess)
+    const regularHours = Math.min(hours, 8);
+    const otHours = Math.max(0, hours - 8);
+
+    // Regular Pay: Regular Hours * Rate * Holiday Multiplier
+    const regularPay = regularHours * hourlyWage * multiplier;
+    
+    // OT Pay: OT Hours * Rate * Holiday Multiplier * Premium (1.25)
+    const otPay = otHours * hourlyWage * multiplier * OT_PREMIUM;
+
+    return acc + regularPay + otPay;
   }, 0);
 
   const startOfWeek = new Date(today);
@@ -230,7 +258,7 @@ export default function Dashboard() {
               <input
                 type="number"
                 className="form-control mb-3"
-                placeholder="e.g. 8"
+                placeholder="e.g. 8 (1-24)"
                 value={hoursInput}
                 onChange={(e) => setHoursInput(e.target.value)}
                 min={1}
@@ -285,8 +313,14 @@ export default function Dashboard() {
                                   </span>
                                 )}
                               </td>
+                             
                               <td className="text-end text-dark text-sm fw-bold">
                                 {Number(entry.hours).toFixed(2)}
+                                {Number(entry.hours) > 8 && (
+                                  <div className="text-xs text-danger">
+                                    (+{(Number(entry.hours) - 8).toFixed(2)} OT)
+                                  </div>
+                                )}
                               </td>
                             </tr>
                           );

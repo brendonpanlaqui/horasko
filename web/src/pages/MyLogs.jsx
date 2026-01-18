@@ -1,201 +1,197 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { fetchEntries } from "../api/entries";
 
+// Helper for consistent date comparison
+const toISODate = (d) => new Date(d).toISOString().split("T")[0];
+
 export default function MyLogs() {
   const [logs, setLogs] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [status, setStatus] = useState({ loading: true, error: null });
 
-  const today = useMemo(() => new Date(), []);
+  // --- 1. DYNAMIC CUTOFF LOGIC (Same as Dashboard) ---
+  const { cutoffStart, cutoffEnd } = useMemo(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const isFirstHalf = today.getDate() <= 15;
 
-  // Fetch all entries
+    return {
+      cutoffStart: toISODate(new Date(year, month, isFirstHalf ? 1 : 16)),
+      cutoffEnd:   toISODate(new Date(year, month, isFirstHalf ? 15 : new Date(year, month + 1, 0).getDate()))
+    };
+  }, []);
+
+  // --- 2. DATA FETCHING ---
   useEffect(() => {
     const loadEntries = async () => {
       try {
-        setLoading(true);
         const data = await fetchEntries();
+        // Ensure data is always an array
         setLogs(Array.isArray(data) ? data : data.data || []);
-      } catch {
-        setError("Failed to load work entries.");
-      } finally {
-        setLoading(false);
+        setStatus({ loading: false, error: null });
+      } catch (err) {
+        setStatus({ loading: false, error: "Failed to load logs." });
       }
     };
     loadEntries();
   }, []);
 
-  const filteredLogs = logs.filter((log) =>
-    log.date?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // --- 3. DATA PROCESSING & MATH (Simplified) ---
+  const { processedLogs, stats } = useMemo(() => {
+    let totalHours = 0;
+    let totalOT = 0;
+    let cutoffHours = 0;
 
-  // Summary Calculations
-  const totalHours = logs.reduce((sum, log) => sum + Number(log.hours), 0);
-  const totalOvertime = logs.reduce((sum, log) => sum + Number(log.overtime || 0), 0);
-  const cutoffHours = logs
-    .filter((log) => {
-      const date = new Date(log.date);
-      // Example cutoff (dynamic logic can replace these static dates)
-      const cutoffStart = new Date("2025-10-16");
-      const cutoffEnd = new Date("2025-10-31");
-      return date >= cutoffStart && date <= cutoffEnd;
-    })
-    .reduce((sum, log) => sum + Number(log.hours), 0);
+    // A. Filter & Process Logs
+    const filtered = logs
+      .filter((log) => log.date?.includes(searchTerm)) // Simple string search
+      .map((log) => {
+        const hours = Number(log.hours || 0);
+        // Calculate OT automatically (Anything above 8 hours)
+        const ot = Math.max(0, hours - 8);
+        
+        // Add to totals
+        totalHours += hours;
+        totalOT += ot;
 
+        // Check if inside current cutoff
+        if (log.date >= cutoffStart && log.date <= cutoffEnd) {
+          cutoffHours += hours;
+        }
+
+        return { ...log, hours, ot };
+      })
+      .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort Newest First
+
+    return {
+      processedLogs: filtered,
+      stats: { totalHours, totalOT, cutoffHours }
+    };
+  }, [logs, searchTerm, cutoffStart, cutoffEnd]);
+
+  // --- 4. RENDER ---
   return (
     <div className="container-fluid py-4">
       {/* Header */}
-      <div className="row mb-4">
-        <div className="col-12 d-flex justify-content-between align-items-center flex-wrap">
-          <div>
-            <h5 className="mb-0 text-dark fw-bold">My Logs</h5>
-            <p className="text-muted small mb-0">
-              Review, edit, or delete your recorded work hours.
-            </p>
-          </div>
-          <button className="btn bg-gradient-success shadow-sm d-flex align-items-center mt-3 mt-sm-0">
-            <span className="material-symbols-rounded me-2">add_circle</span>
-            Add Log
-          </button>
+      <div className="d-flex justify-content-between align-items-center flex-wrap mb-4">
+        <div>
+          <h5 className="mb-0 text-dark fw-bold">My Logs</h5>
+          <p className="text-muted small mb-0">Review and manage your work history.</p>
         </div>
+        <button className="btn bg-gradient-success shadow-sm d-flex align-items-center mt-2 mt-sm-0">
+          <span className="material-symbols-rounded me-2">add_circle</span> Add Log
+        </button>
       </div>
 
       {/* Summary Cards */}
       <div className="row g-3 mb-4">
-        {[
-          { title: "Total Hours", value: `${totalHours.toFixed(2)} hrs`, icon: "schedule_add", color: "text-success" },
-          { title: "Total Overtime", value: `${totalOvertime.toFixed(2)} hrs`, icon: "trending_up", color: "text-info" },
-          { title: "Current Cutoff Hours", value: `${cutoffHours.toFixed(2)} hrs`, icon: "schedule", color: "text-primary" },
-        ].map((card, i) => (
-          <div key={i} className="col-md-4 col-sm-6">
-            <div className="card shadow-sm border-radius-xl h-100">
-              <div className="card-body d-flex justify-content-between align-items-center">
-                <div>
-                  <p className="text-muted text-uppercase small mb-1 fw-semibold">{card.title}</p>
-                  <h6 className="fw-bold text-dark mb-0">{card.value}</h6>
-                </div>
-                <span className={`material-symbols-rounded fs-2 ${card.color}`}>{card.icon}</span>
-              </div>
-            </div>
-          </div>
-        ))}
+        <SummaryCard title="Total Hours" value={`${stats.totalHours.toFixed(2)} hrs`} icon="schedule_add" color="text-success" />
+        <SummaryCard title="Total Overtime" value={`${stats.totalOT.toFixed(2)} hrs`} icon="trending_up" color="text-danger" />
+        <SummaryCard title="Current Cutoff" value={`${stats.cutoffHours.toFixed(2)} hrs`} icon="schedule" color="text-primary" />
       </div>
 
-      {/* Desktop Table */}
-      <div className="row mb-4 d-none d-md-block">
-        <div className="col-12">
-          <div className="card shadow-sm border-radius-xl">
-            <div className="card-header d-flex justify-content-between align-items-center pb-0">
-              <h6 className="fw-bold text-dark mb-2">Work Hour Logs</h6>
-              <div className="d-flex align-items-center pb-3">
-                <span className="material-symbols-rounded text-muted me-2">search</span>
-                <input
-                  type="text"
-                  className="form-control form-control-sm"
-                  placeholder="Search by date..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ maxWidth: "240px" }}
-                />
-              </div>
-            </div>
-            <div className="card-body pt-0">
-              {loading && <p className="text-center text-muted py-3">Loading entries...</p>}
-              {error && <p className="text-center text-danger py-3">{error}</p>}
-              {!loading && !error && (
-                <div className="table-responsive">
-                  <table className="table align-items-center mb-0">
-                    <thead>
-                      <tr>
-                        <th className="text-secondary text-xs font-weight-bolder opacity-7">Date</th>
-                        <th className="text-secondary text-xs font-weight-bolder opacity-7">Hours Worked</th>
-                        <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">Overtime</th>
-                        <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredLogs.length > 0 ? (
-                        filteredLogs
-                          .slice()
-                          .sort((a, b) => new Date(a.date) - new Date(b.date))
-                          .map((log) => (
-                            <tr key={log.id || log.date}>
-                              <td><span className="text-dark text-sm">{new Date(log.date).toDateString()}</span></td>
-                              <td><span className="text-dark text-sm fw-bold">{Number(log.hours).toFixed(2)}</span></td>
-                              <td className="text-end fw-bold text-dark text-sm">{Number(log.overtime || 0)}</td>
-                              <td className="text-end">
-                                <button className="btn btn-sm btn-outline-primary me-2 d-inline-flex align-items-center">
-                                  <span className="material-symbols-rounded">edit</span>
-                                </button>
-                                <button className="btn btn-sm btn-outline-danger d-inline-flex align-items-center">
-                                  <span className="material-symbols-rounded">delete</span>
-                                </button>
-                              </td>
-                            </tr>
-                          ))
-                      ) : (
-                        <tr>
-                          <td colSpan="4" className="text-center text-muted py-4">No logs found.</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+      {/* Main Content Area */}
+      <div className="card shadow-sm border-radius-xl">
+        <div className="card-header d-flex justify-content-between align-items-center pb-0">
+          <h6 className="fw-bold text-dark mb-0">History</h6>
+          <div className="input-group input-group-sm" style={{ maxWidth: "200px" }}>
+            <span className="input-group-text border-0 bg-transparent"><span className="material-symbols-rounded fs-6">search</span></span>
+            <input 
+              type="text" 
+              className="form-control" 
+              placeholder="Search date..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </div>
-      </div>
+        
+        <div className="card-body px-0 pt-2">
+          {status.loading ? (
+             <p className="text-center text-muted py-4">Loading entries...</p>
+          ) : status.error ? (
+             <p className="text-center text-danger py-4">{status.error}</p>
+          ) : processedLogs.length === 0 ? (
+             <p className="text-center text-muted py-4">No logs found.</p>
+          ) : (
+            <>
+              {/* Desktop Table */}
+              <div className="table-responsive d-none d-md-block p-0">
+                <table className="table align-items-center mb-0">
+                  <thead>
+                    <tr>
+                      <th className="text-secondary text-xs font-weight-bolder opacity-7 ps-4">Date</th>
+                      <th className="text-secondary text-xs font-weight-bolder opacity-7">Hours</th>
+                      <th className="text-secondary text-xs font-weight-bolder opacity-7">Overtime</th>
+                      <th className="text-end text-secondary text-xs font-weight-bolder opacity-7 pe-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {processedLogs.map((log) => (
+                      <tr key={log.id || log.date}>
+                        <td className="ps-4"><span className="text-dark text-sm">{new Date(log.date).toDateString()}</span></td>
+                        <td><span className="text-dark text-sm fw-bold">{log.hours.toFixed(2)}</span></td>
+                        <td>
+                          <span className={`text-sm fw-bold ${log.ot > 0 ? 'text-danger' : 'text-muted'}`}>
+                            {log.ot > 0 ? `+${log.ot.toFixed(2)}` : '-'}
+                          </span>
+                        </td>
+                        <td className="text-end pe-4">
+                          <ActionButtons />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-      {/* Mobile Cards */}
-      <div className="row d-md-none">
-        {!loading && !error && (
-          <>
-            {filteredLogs.length > 0 ? (
-              filteredLogs
-                .slice()
-                .sort((a, b) => new Date(a.date) - new Date(b.date))
-                .map((log) => (
-                  <div key={log.id || log.date} className="col-12 mb-3">
-                    <div className="card shadow-sm border-radius-xl p-3 h-100">
-                      <div className="d-flex justify-content-between align-items-center flex-wrap">
-                        <div>
-                          <h6 className="text-dark fw-bold mb-1">
-                            {new Date(log.date).toDateString()}
-                          </h6>
-                          <div className="d-flex gap-3 mt-1">
-                            <div className="text-center">
-                              <p className="text-muted small mb-1">Hours</p>
-                              <h6 className="fw-bold text-dark mb-0">
-                                {Number(log.hours).toFixed(2)}
-                              </h6>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-muted small mb-1">Overtime</p>
-                              <h6 className="fw-bold text-dark mb-0">
-                                {Number(log.overtime || 0)}
-                              </h6>
-                            </div>
-                          </div>
+              {/* Mobile Cards (Only shows on small screens) */}
+              <div className="d-md-none px-3">
+                {processedLogs.map((log) => (
+                  <div key={log.id || log.date} className="card border mb-3 shadow-none">
+                    <div className="card-body p-3">
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <h6 className="text-dark fw-bold mb-0">{new Date(log.date).toDateString()}</h6>
+                        <span className="badge bg-light text-dark">{log.hours.toFixed(2)} hrs</span>
+                      </div>
+                      <div className="d-flex justify-content-between align-items-end">
+                        <div className="text-xs text-muted">
+                           Overtime: <span className={log.ot > 0 ? "text-danger fw-bold" : ""}>{log.ot.toFixed(2)} hrs</span>
                         </div>
-                        <div className="d-flex gap-2 mt-3 mt-sm-0">
-                          <button className="btn btn-sm btn-outline-primary d-flex align-items-center justify-content-center">
-                            <span className="material-symbols-rounded fs-5">edit</span>
-                          </button>
-                          <button className="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center">
-                            <span className="material-symbols-rounded fs-5">delete</span>
-                          </button>
-                        </div>
+                        <div><ActionButtons /></div>
                       </div>
                     </div>
                   </div>
-                ))
-            ) : (
-              <p className="text-center text-muted py-3 mb-0">No logs found.</p>
-            )}
-          </>
-        )}
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
+// --- SUB-COMPONENTS for cleaner code ---
+
+const SummaryCard = ({ title, value, icon, color }) => (
+  <div className="col-md-4 col-sm-6">
+    <div className="card shadow-sm border-radius-xl h-100">
+      <div className="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <p className="text-muted text-uppercase small mb-1 fw-semibold">{title}</p>
+          <h5 className="fw-bold text-dark mb-0">{value}</h5>
+        </div>
+        <span className={`material-symbols-rounded fs-1 ${color}`}>{icon}</span>
+      </div>
+    </div>
+  </div>
+);
+
+const ActionButtons = () => (
+  <>
+    <button className="btn btn-link text-secondary p-0 me-3"><span className="material-symbols-rounded">edit</span></button>
+    <button className="btn btn-link text-danger p-0"><span className="material-symbols-rounded">delete</span></button>
+  </>
+);
