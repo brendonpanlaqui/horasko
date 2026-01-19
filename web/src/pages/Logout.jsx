@@ -20,14 +20,14 @@ function Logout({ setUser }) {
 
   return (
     <button
-      className="dropdown-item text-danger"
+      type="button"
       onClick={handleLogout}
-      type="button" 
+      className="dropdown-item border-radius-md px-3 py-2 d-flex align-items-center text-danger pointer-event"
     >
-      <i className="material-symbols-rounded me-2">logout</i>
-      Logout
+      <i className="material-symbols-rounded me-2 fs-5 text-danger">logout</i>
+      <span className="text-danger">Logout</span>
     </button>
-  );
+  );  
 }
 
 export default Logout;
