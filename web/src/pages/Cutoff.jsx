@@ -26,8 +26,8 @@ export default function Cutoff() {
     const loadData = async () => {
       try {
         const [logsRes, holidaysRes] = await Promise.all([
-          fetchEntries(), 
-          fetchHolidays()
+          fetchEntries(), //
+          fetchHolidays() //
         ]);
 
         if (isMounted) {
@@ -108,9 +108,9 @@ export default function Cutoff() {
         {/* Header */}
         <div className="col-12 mb-4 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
           <div>
-            <h5 className="fw-bold text-dark mb-1">Cutoff Summary</h5>
+            <h5 className="fw-bold text-dark mb-1">Cutoff</h5>
             <p className="text-muted small mb-0">
-              Review total hours, overtime, and pay for this payroll period.
+              Review summaries of total hours, overtime, and pay for this payroll period.
             </p>
           </div>
           <button className="btn bg-gradient-primary shadow-sm d-flex align-items-center mt-2 mt-sm-0">
@@ -120,61 +120,28 @@ export default function Cutoff() {
         </div>
 
         {/* Global Error */}
-        {status.error && <div className="col-12 alert alert-danger text-white mb-4">{status.error}</div>}
+        {status.error && (
+            <div className="col-12 mt-3">
+            <div className={`alert alert-danger border-radius-md shadow-sm`} role="alert">
+              {status.error}
+            </div>
+          </div>
+        )}
 
         {/* Summary Cards - SHOWS 0.00 INITIALLY (No Spinner) */}
         <div className="col-12 mb-4">
           <div className="row g-3">
-            <div className="col-md-4 col-sm-6">
-              <div className="card shadow-sm border-radius-xl h-100">
-                <div className="card-body d-flex justify-content-between align-items-center">
-                  <div>
-                    <p className="text-muted text-uppercase small mb-1 fw-semibold">
-                      Current Cutoff Payable
-                    </p>
-                    <h6 className="fw-bold text-dark mb-0">{summary.currentCutoffPayable}</h6>
-                  </div>
-                  <span className="material-symbols-rounded text-primary fs-2">schedule</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-md-4 col-sm-6">
-              <div className="card shadow-sm border-radius-xl h-100">
-                <div className="card-body d-flex justify-content-between align-items-center">
-                  <div>
-                    <p className="text-muted text-uppercase small mb-1 fw-semibold">
-                      Total Hours
-                    </p>
-                    {/* Shows "0.00 hrs" immediately, updates when data loads */}
-                    <h6 className="fw-bold text-dark mb-0">{summary.totalHours.toFixed(2)} hrs</h6>
-                  </div>
-                  <span className="material-symbols-rounded text-success fs-2">schedule_add</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-md-4 col-sm-6">
-              <div className="card shadow-sm border-radius-xl h-100">
-                <div className="card-body d-flex justify-content-between align-items-center">
-                  <div>
-                    <p className="text-muted text-uppercase small mb-1 fw-semibold">
-                      Total Overtime
-                    </p>
-                    <h6 className="fw-bold text-dark mb-0">{summary.totalOvertime.toFixed(2)} hrs</h6>
-                  </div>
-                  <span className="material-symbols-rounded text-info fs-2">trending_up</span>
-                </div>
-              </div>
-            </div>
+             <SummaryCard title="Current Cutoff Payable" value={summary.currentCutoffPayable} icon="payments" color="text-primary" />
+             <SummaryCard title="Total Hours" value={`${summary.totalHours.toFixed(2)} hrs`} icon="schedule_add" color="text-success" />
+             <SummaryCard title="Total Overtime" value={`${summary.totalOvertime.toFixed(2)} hrs`} icon="trending_up" color="text-info" />
           </div>
         </div>
 
         {/* Table - SHOWS LOADING SPINNER ONLY IN BODY */}
         <div className="col-12 mb-4 d-none d-md-block">
           <div className="card shadow-sm border-radius-xl">
-            <div className="card-header d-flex justify-content-between align-items-center pb-0">
-              <h6 className="fw-bold text-dark mb-0">Cutoff Breakdown</h6>
+            <div className="card-header d-flex justify-content-between align-items-center">
+              <h6 className="fw-bold text-dark mb-0">Breakdown</h6>
               <div className="d-flex align-items-center text-muted small">
                 <span className="material-symbols-rounded me-1">info</span>
                 Work hours and pay details per cutoff
@@ -198,7 +165,6 @@ export default function Cutoff() {
                     {status.loading ? (
                       <tr>
                         <td colSpan="6" className="text-center py-4 text-muted">
-                           <div className="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
                            Loading entries...
                         </td>
                       </tr>
@@ -227,7 +193,6 @@ export default function Cutoff() {
         <div className="col-12 d-md-none">
           {status.loading ? (
              <div className="text-center py-4 text-muted">
-                <div className="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
                 Loading...
              </div>
           ) : cutoffs.length === 0 ? (
@@ -256,3 +221,19 @@ export default function Cutoff() {
     </div>
   );
 }
+
+// --- SUB-COMPONENTS for cleaner code ---
+
+const SummaryCard = ({ title, value, icon, color }) => (
+  <div className="col-md-4 col-sm-6">
+    <div className="card shadow-sm border-radius-xl h-100">
+      <div className="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <p className="text-muted text-uppercase small mb-1 fw-semibold">{title}</p>
+          <h5 className="fw-bold text-dark mb-0">{value}</h5>
+        </div>
+        <span className={`material-symbols-rounded fs-1 ${color}`}>{icon}</span>
+      </div>
+    </div>
+  </div>
+);

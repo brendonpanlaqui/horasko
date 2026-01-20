@@ -45,8 +45,7 @@ function Navbar({ user, setUser, setSidebarOpen, sidebarOpen }) {
           {/* Search Bar */}
           <div className="ms-md-auto pe-md-3 d-flex align-items-center">
             <div className="input-group input-group-outline">
-              <label className="form-label">Type here...</label>
-              <input type="text" className="form-control" />
+              <input type="text" className="form-control" placeholder="Type here..."/>
             </div>
           </div>
 
@@ -105,8 +104,6 @@ function Navbar({ user, setUser, setSidebarOpen, sidebarOpen }) {
                 className={`dropdown-menu dropdown-menu-end px-2 py-3 me-sm-n4 border-0 shadow-lg ${
                   dropdownOpen ? "show" : ""
                 }`}
-                aria-labelledby="dropdownMenuButton"
-                style={{ top: "100%", minWidth: "240px", marginTop: "10px", zIndex: 1000 }}
               >
                 {/* User Header */}
                 <li className="mb-2">

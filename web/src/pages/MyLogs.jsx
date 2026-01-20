@@ -93,9 +93,9 @@ export default function MyLogs() {
 
       {/* Main Content Area */}
       <div className="card shadow-sm border-radius-xl">
-        <div className="card-header d-flex justify-content-between align-items-center pb-0">
+        <div className="card-header d-flex justify-content-between align-items-center">
           <h6 className="fw-bold text-dark mb-0">History</h6>
-          <div className="input-group input-group-sm" style={{ maxWidth: "200px" }}>
+          <div className="input-group input-group-sm" style={{ maxWidth: "150px" }}>
             <span className="input-group-text border-0 bg-transparent"><span className="material-symbols-rounded fs-6">search</span></span>
             <input 
               type="text" 
