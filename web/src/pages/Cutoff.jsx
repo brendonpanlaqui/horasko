@@ -15,7 +15,7 @@ const getMonthName = (date) =>
   date.toLocaleString('default', { month: 'short' });
 
 export default function Cutoff() {
-  // 1. INITIAL STATE (Empty arrays = 0 values in UI)
+  // 1. INITIAL STATE
   const [logs, setLogs] = useState([]);
   const [holidays, setHolidays] = useState([]);
   const [status, setStatus] = useState({ loading: true, error: null });
@@ -26,8 +26,8 @@ export default function Cutoff() {
     const loadData = async () => {
       try {
         const [logsRes, holidaysRes] = await Promise.all([
-          fetchEntries(), //
-          fetchHolidays() //
+          fetchEntries(), 
+          fetchHolidays() 
         ]);
 
         if (isMounted) {
@@ -44,7 +44,6 @@ export default function Cutoff() {
   }, []);
 
   // --- 3. CALCULATIONS ---
-  // If logs is [], reduce returns 0, so UI shows 0.00 immediately
   const { cutoffs, summary } = useMemo(() => {
     const groups = {};
 
@@ -128,7 +127,7 @@ export default function Cutoff() {
           </div>
         )}
 
-        {/* Summary Cards - SHOWS 0.00 INITIALLY (No Spinner) */}
+        {/* Summary Cards */}
         <div className="col-12 mb-4">
           <div className="row g-3">
              <SummaryCard title="Current Cutoff Payable" value={summary.currentCutoffPayable} icon="payments" color="text-primary" />
@@ -137,7 +136,7 @@ export default function Cutoff() {
           </div>
         </div>
 
-        {/* Table - SHOWS LOADING SPINNER ONLY IN BODY */}
+        {/* Desktop Table - EXACT MyLogs Loading Behavior */}
         <div className="col-12 mb-4 d-none d-md-block">
           <div className="card shadow-sm border-radius-xl">
             <div className="card-header d-flex justify-content-between align-items-center">
@@ -147,49 +146,58 @@ export default function Cutoff() {
                 Work hours and pay details per cutoff
               </div>
             </div>
+            
             <div className="card-body pt-0">
-              <div className="table-responsive">
-                <table className="table align-items-center mb-0">
-                  <thead>
-                    <tr>
-                      <th className="text-secondary text-xs font-weight-bolder opacity-7">Cutoff Period</th>
-                      <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">Total Hours</th>
-                      <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">Regular Hours</th>
-                      <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">Holiday Hours</th>
-                      <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">Overtime</th>
-                      <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">Pay</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* Matches MyLogs Loading Style */}
-                    {status.loading ? (
+              {/* CONDITIONAL RENDERING: Hides table completely when loading */}
+              {status.loading ? (
+                <p className="text-center text-muted py-4">Loading entries...</p>
+              ) : cutoffs.length === 0 ? (
+                <p className="text-center text-muted py-4">No entries found.</p>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table align-items-center mb-0">
+                    <thead>
                       <tr>
-                        <td colSpan="6" className="text-center py-4 text-muted">
-                           Loading entries...
-                        </td>
+                        <th className="text-secondary text-xs font-weight-bolder opacity-7 ps-4 p-3">Cutoff Period</th>
+                        <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">Total Hours</th>
+                        <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">Regular Hours</th>
+                        <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">Holiday Hours</th>
+                        <th className="text-end text-secondary text-xs font-weight-bolder opacity-7">Overtime</th>
+                        <th className="text-end text-secondary text-xs font-weight-bolder opacity-7 pe-4">Pay</th>
                       </tr>
-                    ) : cutoffs.length === 0 ? (
-                      <tr><td colSpan="6" className="text-center py-4 text-muted">No entries found.</td></tr>
-                    ) : (
-                      cutoffs.map((c, index) => (
+                    </thead>
+                    <tbody>
+                      {cutoffs.map((c, index) => (
                         <tr key={index}>
-                          <td className="text-dark text-sm fw-semibold">{c.period}</td>
-                          <td className="text-end fw-bold text-dark text-sm">{c.totalHours.toFixed(2)}</td>
-                          <td className="text-end fw-bold text-dark text-sm">{c.regularHours.toFixed(2)}</td>
-                          <td className="text-end fw-bold text-dark text-sm">{c.holidayHours.toFixed(2)}</td>
-                          <td className="text-end fw-bold text-dark text-sm">{c.overtime.toFixed(2)}</td>
-                          <td className="text-end fw-bold text-success text-sm">{c.payable}</td>
+                          <td className="ps-4">
+                            <span className="text-dark text-sm fw-semibold">{c.period}</span>
+                          </td>
+                          <td className="text-end">
+                            <span className="text-dark text-sm fw-bold">{c.totalHours.toFixed(2)}</span>
+                          </td>
+                          <td className="text-end">
+                            <span className="text-dark text-sm fw-bold">{c.regularHours.toFixed(2)}</span>
+                          </td>
+                          <td className="text-end">
+                            <span className="text-dark text-sm fw-bold">{c.holidayHours.toFixed(2)}</span>
+                          </td>
+                          <td className="text-end">
+                            <span className="text-dark text-sm fw-bold">{c.overtime.toFixed(2)}</span>
+                          </td>
+                          <td className="text-end pe-4">
+                            <span className="text-success text-sm fw-bold">{c.payable}</span>
+                          </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Mobile Cards - LOADING STATE */}
+        {/* Mobile Cards */}
         <div className="col-12 d-md-none">
           {status.loading ? (
              <div className="text-center py-4 text-muted">
@@ -201,11 +209,27 @@ export default function Cutoff() {
             cutoffs.map((c, index) => (
               <div key={index} className="border rounded-3 p-3 mb-3 shadow-sm bg-white">
                 <h6 className="fw-bold text-dark mb-2">{c.period}</h6>
-                <p className="text-muted small mb-1">Total Hours: <span className="fw-bold text-dark">{c.totalHours.toFixed(2)}</span></p>
-                <p className="text-muted small mb-1">Regular Hours: <span className="fw-bold text-dark">{c.regularHours.toFixed(2)}</span></p>
-                <p className="text-muted small mb-1">Holiday Hours: <span className="fw-bold text-dark">{c.holidayHours.toFixed(2)}</span></p>
-                <p className="text-muted small mb-1">Overtime: <span className="fw-bold text-dark">{c.overtime.toFixed(2)}</span></p>
-                <p className="text-muted small mb-0">Pay: <span className="fw-bold text-success">{c.payable}</span></p>
+                <div className="d-flex justify-content-between mb-1">
+                    <span className="text-muted small">Total Hours:</span>
+                    <span className="fw-bold text-dark small">{c.totalHours.toFixed(2)}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-1">
+                    <span className="text-muted small">Regular Hours:</span>
+                    <span className="fw-bold text-dark small">{c.regularHours.toFixed(2)}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-1">
+                    <span className="text-muted small">Holiday Hours:</span>
+                    <span className="fw-bold text-dark small">{c.holidayHours.toFixed(2)}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-1">
+                    <span className="text-muted small">Overtime:</span>
+                    <span className="fw-bold text-dark small">{c.overtime.toFixed(2)}</span>
+                </div>
+                <hr className="my-2"/>
+                <div className="d-flex justify-content-between align-items-center">
+                    <span className="text-muted small fw-bold text-uppercase">Net Pay</span>
+                    <span className="fw-bold text-success">{c.payable}</span>
+                </div>
               </div>
             ))
           )}
@@ -222,7 +246,7 @@ export default function Cutoff() {
   );
 }
 
-// --- SUB-COMPONENTS for cleaner code ---
+// --- SUB-COMPONENTS ---
 
 const SummaryCard = ({ title, value, icon, color }) => (
   <div className="col-md-4 col-sm-6">
