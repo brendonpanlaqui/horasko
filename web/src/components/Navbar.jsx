@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Logout from "../pages/Logout";
 
 // Helper to get initials (e.g. "John Doe" -> "JD")
@@ -17,6 +17,33 @@ const getInitials = (name) => {
 function Navbar({ user, setUser, setSidebarOpen, sidebarOpen }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const location = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+
+  const pages = [
+    { name: "Dashboard", path: "/" },
+    { name: "My Logs", path: "/my-logs" }, 
+    { name: "Cutoff", path: "/cutoff" },
+    { name: "Profile", path: "/profile" },
+    { name: "Logout", path: "/logout" },
+  ]
+
+  const handleSearch = (e) => {
+    if (e.key === "Enter") {
+      const query = searchQuery.toLowerCase();
+      const foundPage = pages.find((page) => 
+        page.name.toLowerCase().includes(query)
+      );
+
+      if (foundPage) {
+        setSearchQuery(""); // Clear search
+        navigate(foundPage.path); // Go to page
+      } else {
+        // Optional: Show alert or toast "Page not found"
+        console.log("Page not found");
+      }
+    }
+  };
 
   const pageTitle = location.pathname.split("/").filter(Boolean).pop() || "Dashboard";
   const formattedTitle = pageTitle.charAt(0).toUpperCase() + pageTitle.slice(1);
@@ -45,7 +72,14 @@ function Navbar({ user, setUser, setSidebarOpen, sidebarOpen }) {
           {/* Search Bar */}
           <div className="ms-md-auto pe-md-3 d-flex align-items-center">
             <div className="input-group input-group-outline">
-              <input type="text" className="form-control" placeholder="Type here..."/>
+              <input 
+                type="text" 
+                className="form-control" 
+                placeholder="Search pages..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearch} // Triggers on Enter key
+              />
             </div>
           </div>
 
