@@ -34,128 +34,129 @@ export default function Forgot() {
   };
 
   return (
-    <div
-      className="min-vh-100 d-flex align-items-center justify-content-center bg-light"
-      style={{
-        background: "linear-gradient(180deg, #f8f9fe 0%, #ffffff 100%)",
-        padding: "1rem",
-      }}
-    >
-      <div
-        className="card shadow border-0 p-4 p-md-5 w-100"
+    <div className="d-flex min-vh-100 bg-white">
+      {/* -----------------------------------------------------------
+          LEFT COLUMN: Visual/Brand
+       ----------------------------------------------------------- */}
+      <div 
+        className="d-none d-md-flex col-md-6 col-lg-7 position-relative align-items-center justify-content-center overflow-hidden"
         style={{
-          maxWidth: 420,
-          borderRadius: "1.25rem",
-          animation: "fadeIn 0.6s ease",
+          backgroundImage: "url('https://images.unsplash.com/photo-1497215728101-856f4ea42174?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
         }}
       >
-        {/* Brand header */}
-        <div className="text-center mb-4">
-          <div
-            className="d-inline-flex align-items-center justify-content-center mb-3"
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: "50%",
-              background: "rgba(63, 81, 181, 0.1)",
-            }}
-          >
-            <i
-              className="material-symbols-rounded text-primary"
-              style={{ fontSize: 36 }}
-            >
-              mail_lock
-            </i>
-          </div>
-          <h3 className="fw-bold mb-1" style={{ letterSpacing: "-0.5px" }}>
-            HorasKo
-          </h3>
-          <p className="text-muted small mb-0">
-            Forgot your password? No worries — we’ll help you reset it.
+        {/* Gradient Overlay */}
+        <div 
+          className="position-absolute top-0 start-0 w-100 h-100" 
+          style={{ 
+            background: "linear-gradient(310deg, #141727 0%, #3A416F 100%)", 
+            opacity: 0.85
+          }}
+        ></div>
+
+        <div className="position-relative text-white text-center p-5" style={{ zIndex: 2, maxWidth: "600px" }}>
+          <h2 className="display-5 fw-bold mb-3" style={{ letterSpacing: "-1px" }}>Security first.</h2>
+          <p className="lead text-white opacity-8">
+            Forgot your password? No worries. We'll help you get back to tracking your time in seconds.
           </p>
         </div>
-
-        {/* Alert */}
-        {alert && (
-          <div
-            className={`alert alert-${alert.type} py-2 text-center border-0`}
-            style={{ borderRadius: "0.75rem" }}
-          >
-            {alert.message}
-          </div>
-        )}
-
-        {/* Forgot form */}
-        <form onSubmit={handleSendResetLink}>
-          <div className="mb-3">
-            <label className="form-label small fw-semibold text-secondary">
-              Email Address
-            </label>
-            <div className="input-group input-group-outline">
-              <span className="input-group-text bg-transparent border-end-0">
-                <i className="fas fa-envelope text-muted"></i>
-              </span>
-              <input
-                type="email"
-                className="form-control border-start-0"
-                placeholder="name@company.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="d-grid mb-3">
-            <button
-              type="submit"
-              className="btn bg-gradient-primary btn-lg shadow-sm"
-              disabled={loading}
-              style={{ borderRadius: "0.75rem", fontWeight: 600 }}
-            >
-              {loading ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2"></span>
-                  Sending link...
-                </>
-              ) : (
-                "Send Reset Link"
-              )}
-            </button>
-          </div>
-
-          <p className="text-center text-muted small mt-4 mb-0">
-            Remember your password?{" "}
-            <span
-              className="text-primary fw-semibold text-decoration-none"
-              style={{ cursor: "pointer" }}
-              onClick={() => navigate("/login")}
-            >
-              Back to Login
-            </span>
-          </p>
-        </form>
       </div>
 
-      {/* Animation */}
-      <style>
-        {`
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
+      {/* -----------------------------------------------------------
+          RIGHT COLUMN: Forgot Form
+       ----------------------------------------------------------- */}
+      <div className="col-12 col-md-6 col-lg-5 d-flex align-items-center justify-content-center p-4 p-sm-5">
+        <div className="w-100" style={{ maxWidth: "420px" }}>
+          
+          {/* Header */}
+          <div className="text-center mb-4">
+            <div
+              className="d-inline-flex align-items-center justify-content-center mb-3"
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                background: "rgba(63, 81, 181, 0.1)",
+              }}
+            >
+              <i
+                className="material-symbols-rounded text-primary"
+                style={{ fontSize: 36 }}
+              >
+                mail_lock
+              </i>
+            </div>
+            <h3 className="fw-bold text-dark mb-1" style={{ letterSpacing: "-0.5px" }}>
+              HorasKo
+            </h3>
+            <p className="text-muted text-sm">
+              Enter your email to receive a reset link.
+            </p>
+          </div>
 
-          @media (max-width: 576px) {
-            .card {
-              padding: 1.5rem !important;
-              border-radius: 1rem !important;
-            }
-            h3 {
-              font-size: 1.4rem;
-            }
-          }
-        `}
-      </style>
+          {/* Alert */}
+          {alert && (
+            <div
+              className={`alert alert-${alert.type} py-2 text-center border-0 mb-4`}
+              style={{ borderRadius: "0.75rem" }}
+            >
+              {alert.message}
+            </div>
+          )}
+
+          <form onSubmit={handleSendResetLink}>
+            {/* Email Field - Clean Style */}
+            <div className="mb-3">
+              <label className="form-label text-xs fw-bold text-muted text-uppercase">
+                Email Address
+              </label>
+              <div className="input-group">
+                <input
+                  type="email"
+                  className="form-control ps-3 border-radius-lg"
+                  placeholder="name@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  style={{ minHeight: "45px" }}
+                />
+              </div>
+            </div>
+
+            {/* Button */}
+            <div className="d-grid mb-3 mt-4">
+              <button
+                type="submit"
+                className="btn bg-gradient-primary btn-lg shadow-sm"
+                disabled={loading}
+                style={{ borderRadius: "0.75rem", fontWeight: 600 }}
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2"></span>
+                    Sending link...
+                  </>
+                ) : (
+                  "Send Reset Link"
+                )}
+              </button>
+            </div>
+
+            {/* Back to Login */}
+            <p className="text-center text-muted small mt-4 mb-0">
+              Remember your password?{" "}
+              <span
+                className="text-primary text-gradient fw-bold text-decoration-none"
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate("/login")}
+              >
+                Back to Login
+              </span>
+            </p>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
