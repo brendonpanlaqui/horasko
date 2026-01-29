@@ -79,9 +79,6 @@ export default function MyLogs() {
           <h5 className="mb-0 text-dark fw-bold">My Logs</h5>
           <p className="text-muted small mb-0">Review and manage your work hours log history.</p>
         </div>
-        <button className="btn bg-gradient-success shadow-sm d-flex align-items-center mt-2 mt-sm-0">
-          <span className="material-symbols-rounded me-2">add_circle</span> Add Log
-        </button>
       </div>
 
       {/* Summary Cards */}

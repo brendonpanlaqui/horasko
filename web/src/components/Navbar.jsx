@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import Logout from "../auth/Logout";
 
 // Helper to get initials (e.g. "John Doe" -> "JD")
@@ -105,9 +105,13 @@ function Navbar({ user, setUser, setSidebarOpen, sidebarOpen }) {
 
             {/* 1. SETTINGS ICON */}
             <li className="nav-item px-3 d-flex align-items-center">
-              <a href="javascript:;" className="nav-link text-body p-0 d-flex align-items-center">
+              <Link 
+                    className="dropdown-item border-radius-md px-3 py-2 d-flex align-items-center" 
+                    to="/settings"
+                    onClick={() => setDropdownOpen(false)} 
+                  >
                 <i className="material-symbols-rounded fs-5">settings</i>
-              </a>
+              </Link>
             </li>
 
             {/* 2. NOTIFICATIONS ICON */}
@@ -156,16 +160,24 @@ function Navbar({ user, setUser, setSidebarOpen, sidebarOpen }) {
                 
                 {/* Menu Items */}
                 <li>
-                  <a className="dropdown-item border-radius-md px-3 py-2 d-flex align-items-center" href="/profile">
+                  <Link 
+                    className="dropdown-item border-radius-md px-3 py-2 d-flex align-items-center" 
+                    to="/profile"
+                    onClick={() => setDropdownOpen(false)} 
+                  >
                     <i className="material-symbols-rounded text-secondary me-2 fs-5">person</i>
                     <span className="text-sm">My Profile</span>
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a className="dropdown-item border-radius-md px-3 py-2 d-flex align-items-center" href="/settings">
+                  <Link 
+                    className="dropdown-item border-radius-md px-3 py-2 d-flex align-items-center" 
+                    to="/settings"
+                    onClick={() => setDropdownOpen(false)} 
+                  >
                     <i className="material-symbols-rounded text-secondary me-2 fs-5">settings</i>
                     <span className="text-sm">Settings</span>
-                  </a>
+                  </Link>
                 </li>
 
                 <li><hr className="horizontal dark my-2" /></li>

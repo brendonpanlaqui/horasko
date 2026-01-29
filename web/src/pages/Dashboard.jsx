@@ -13,7 +13,7 @@ export default function Dashboard() {
   // --- SETUP & CONFIGURATION ---
   // We use a stable reference for "now" to avoid second-tick re-renders
   const today = useMemo(() => new Date(), []);
-  const hourlyWage = 70;
+  const hourlyWage = 72;
   const OT_PREMIUM = 1.25;
 
   // --- STATE MANAGEMENT ---
