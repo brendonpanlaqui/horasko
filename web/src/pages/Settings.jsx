@@ -139,7 +139,7 @@ export default function Settings() {
                 <span className="badge bg-white text-secondary border mb-3">{profile.email}</span>
              </div>
           </div>
-        </div>
+        </div> 
 
         {/* RIGHT COLUMN: Configuration Form */}
         <div className="col-lg-8">
