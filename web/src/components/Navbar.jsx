@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Logout from "../pages/Logout";
+import Logout from "../auth/Logout";
 
 // Helper to get initials (e.g. "John Doe" -> "JD")
 const getInitials = (name) => {
@@ -162,7 +162,7 @@ function Navbar({ user, setUser, setSidebarOpen, sidebarOpen }) {
                   </a>
                 </li>
                 <li>
-                  <a className="dropdown-item border-radius-md px-3 py-2 d-flex align-items-center" href="javascript:;">
+                  <a className="dropdown-item border-radius-md px-3 py-2 d-flex align-items-center" href="/settings">
                     <i className="material-symbols-rounded text-secondary me-2 fs-5">settings</i>
                     <span className="text-sm">Settings</span>
                   </a>
