@@ -59,9 +59,9 @@ export default function Register() {
         ></div>
 
         <div className="position-relative text-white text-center p-5" style={{ zIndex: 2, maxWidth: "600px" }}>
-          <h2 className="display-5 fw-bold mb-3" style={{ letterSpacing: "-1px" }}>Join the movement.</h2>
+          <h2 className="display-5 fw-bold mb-3" style={{ letterSpacing: "-1px" }}>Tracking made simple.</h2>
           <p className="lead text-white opacity-8">
-            Start tracking your productivity, managing tasks, and streamlining your workflow with HorasKo today.
+            Sign up to start building a precise archive of your work hours. Simple manual entry for clear, reliable data.
           </p>
         </div>
       </div>

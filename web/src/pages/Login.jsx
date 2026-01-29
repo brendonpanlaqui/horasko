@@ -63,9 +63,9 @@ export default function Login({ setUser }) {
         ></div>
 
         <div className="position-relative text-white text-center p-5" style={{ zIndex: 2, maxWidth: "600px" }}>
-          <h2 className="display-5 fw-bold mb-3" style={{ letterSpacing: "-1px" }}>Make every hour count.</h2>
+          <h2 className="display-5 fw-bold mb-3" style={{ letterSpacing: "-1px" }}>Log your hours. Own your time</h2>
           <p className="lead text-white opacity-8">
-            Track your productivity, manage tasks, and streamline your workflow with HorasKo.
+            Manually track your work sessions with precision. Build a reliable history of your hours, one entry at a time.
           </p>
         </div>
       </div>
