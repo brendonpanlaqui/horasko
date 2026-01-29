@@ -112,10 +112,6 @@ export default function Cutoff() {
               Review summaries of total hours, overtime, and pay for this payroll period.
             </p>
           </div>
-          <button className="btn bg-gradient-primary shadow-sm d-flex align-items-center mt-2 mt-sm-0">
-            <span className="material-symbols-rounded me-2">history</span>
-            View History
-          </button>
         </div>
 
         {/* Global Error */}
@@ -238,7 +234,7 @@ export default function Cutoff() {
         {/* Footer */}
         {!status.loading && (
           <div className="col-12 text-center text-muted small mt-3">
-            <p className="mb-0">Showing data for current and previous cutoffs. Use “View History” for full payroll review.</p>
+            <p className="mb-0">Showing data for current and previous cutoffs for full payroll review.</p>
           </div>
         )}
       </div>
