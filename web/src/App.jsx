@@ -8,10 +8,11 @@ import Dashboard from "./pages/Dashboard";
 import MyLogs from "./pages/MyLogs";
 import Cutoff from "./pages/Cutoff";
 import Profile from "./pages/Profile";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Forgot from "./pages/Forgot";
-import Reset from "./pages/Reset";  
+import Settings from "./pages/Settings";
+import Login from "./auth/Login";
+import Register from "./auth/Register";
+import Forgot from "./auth/Forgot";
+import Reset from "./auth/Reset";  
 
 // Protected layout for authenticated users
 function Layout({ user, setUser }) {
@@ -28,6 +29,7 @@ function Layout({ user, setUser }) {
             <Route path="/my-logs" element={<MyLogs />} />
             <Route path="/cutoff" element={<Cutoff />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
         <Footer />
